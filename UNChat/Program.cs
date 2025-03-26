@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
+using UNChat.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,22 @@ builder.Services.AddDbContext<UNChatDBContext>(options =>
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<UNChatDBContext>();
+
+    if (!dbContext.Users.Any()) // Sprawdzamy, czy tabela Users jest pusta
+    {
+        dbContext.Users.AddRange(new List<User>
+        {
+            new User { Username = "Alice", PasswordHash = "hashed_password1" },
+            new User { Username = "Bob", PasswordHash = "hashed_password2" }
+        });
+
+        dbContext.SaveChanges();
+    }
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -30,3 +47,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+

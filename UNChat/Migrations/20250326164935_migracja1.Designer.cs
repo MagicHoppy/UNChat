@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDBContext))]
-    partial class UNChatDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250326164935_migracja1")]
+    partial class migracja1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,6 +23,21 @@ namespace UNChat.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("ChatUser", b =>
+                {
+                    b.Property<int>("ChatsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ChatsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("ChatUser");
+                });
 
             modelBuilder.Entity("UNChat.Models.Chat", b =>
                 {
@@ -63,11 +81,16 @@ namespace UNChat.Migrations
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChatId");
 
                     b.HasIndex("SenderId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Messages");
                 });
@@ -94,19 +117,19 @@ namespace UNChat.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("UNChat.Models.UserChat", b =>
+            modelBuilder.Entity("ChatUser", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.HasOne("UNChat.Models.Chat", null)
+                        .WithMany()
+                        .HasForeignKey("ChatsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<int>("ChatId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserId", "ChatId");
-
-                    b.HasIndex("ChatId");
-
-                    b.ToTable("UserChats");
+                    b.HasOne("UNChat.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("UNChat.Models.Message", b =>
@@ -120,45 +143,28 @@ namespace UNChat.Migrations
                     b.HasOne("UNChat.Models.User", "Sender")
                         .WithMany("MessagesSent")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("UNChat.Models.User", null)
+                        .WithMany("MessagesReceived")
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Chat");
 
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("UNChat.Models.UserChat", b =>
-                {
-                    b.HasOne("UNChat.Models.Chat", "Chat")
-                        .WithMany("UserChats")
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNChat.Models.User", "User")
-                        .WithMany("UserChats")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chat");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("UNChat.Models.Chat", b =>
                 {
                     b.Navigation("Messages");
-
-                    b.Navigation("UserChats");
                 });
 
             modelBuilder.Entity("UNChat.Models.User", b =>
                 {
-                    b.Navigation("MessagesSent");
+                    b.Navigation("MessagesReceived");
 
-                    b.Navigation("UserChats");
+                    b.Navigation("MessagesSent");
                 });
 #pragma warning restore 612, 618
         }

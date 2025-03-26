@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNChat.Models
 {
-    
+
     public class Message
     {
         [Key]
@@ -20,9 +20,12 @@ namespace UNChat.Models
         public int SenderId { get; set; }
         public User Sender { get; set; }
 
-        [ForeignKey("Receiver")]
-        public int ReceiverId { get; set; }
-        public User Receiver { get; set; }
+        [ForeignKey("Chat")]
+        public int ChatId { get; set; }
+        public Chat Chat { get; set; }
     }
 
+
 }
+
+

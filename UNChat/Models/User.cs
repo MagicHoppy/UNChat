@@ -14,9 +14,11 @@ namespace UNChat.Models
         public string Username { get; set; }
 
         [Required]
-        public string PasswordHash { get; set; } // Przechowywanie hasła w postaci hasha
+        public string PasswordHash { get; set; }
 
         public ICollection<Message> MessagesSent { get; set; }
-        public ICollection<Message> MessagesReceived { get; set; }
+
+        public ICollection<UserChat> UserChats { get; set; } = new List<UserChat>();
     }
+
 }

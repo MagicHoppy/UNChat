@@ -12,9 +12,15 @@ namespace UNChat.Models
         [Required, MaxLength(100)]
         public string Name { get; set; }
 
-        public ICollection<User> Users { get; set; }
-        public ICollection<Message> Messages { get; set; }
+        public bool IsPrivate { get; set; } = true; // Domyślnie prywatna rozmowa
+
+        // Relacja wiele-do-wielu z User
+        public ICollection<UserChat> UserChats { get; set; } = new List<UserChat>();
+
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
+
+
 }
 
 
