@@ -1,45 +1,45 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using UNChat.Context;
 using UNChat.Models;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Konfiguracja bazy danych
-builder.Services.AddDbContext<UNChatDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("UNChatDB")));
+// Pobranie konfiguracji
+var configuration = builder.Configuration;
+
+// Rejestracja us³ug
+builder.Services.AddDbContext<UNChatDbContext>(options =>
+    options.UseSqlServer(configuration.GetConnectionString("UNChatDb")));
+
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<UNChatDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Konfiguracja potoku przetwarzania ¿¹dañ
+if (app.Environment.IsDevelopment())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<UNChatDBContext>();
-
-    if (!dbContext.Users.Any()) // Sprawdzamy, czy tabela Users jest pusta
-    {
-        dbContext.Users.AddRange(new List<User>
-        {
-            new User { Username = "Alice", PasswordHash = "hashed_password1" },
-            new User { Username = "Bob", PasswordHash = "hashed_password2" }
-        });
-
-        dbContext.SaveChanges();
-    }
+    app.UseDeveloperExceptionPage();
 }
-
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseExceptionHandler("/Home/Error");
 }
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -47,5 +47,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-

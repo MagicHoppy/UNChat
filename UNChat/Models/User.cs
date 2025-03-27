@@ -1,24 +1,10 @@
-﻿using UNChat.Models;
-
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace UNChat.Models
 {
-    public class User
+    // Model użytkownika
+    public class User : IdentityUser
     {
-        [Key]
-        public int Id { get; set; }
-
-        [Required, MaxLength(50)]
-        public string Username { get; set; }
-
-        [Required]
-        public string PasswordHash { get; set; }
-
-        public ICollection<Message> MessagesSent { get; set; }
-
-        public ICollection<UserChat> UserChats { get; set; } = new List<UserChat>();
+        public string Name { get; set; }
     }
-
 }
