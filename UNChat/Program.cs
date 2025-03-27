@@ -8,16 +8,10 @@ using Microsoft.Extensions.Hosting;
 using UNChat.Context;
 using UNChat.Models;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Pobranie konfiguracji
-var configuration = builder.Configuration;
-
-// Rejestracja us³ug
 builder.Services.AddDbContext<UNChatDbContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("UNChatDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("UNChatDb")));
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<UNChatDbContext>()
@@ -27,7 +21,6 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Konfiguracja potoku przetwarzania ¿¹dañ
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
