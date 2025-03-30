@@ -53,6 +53,21 @@ namespace UNChat.Controllers
         public IActionResult Login() => View();
 
         // Logowanie - POST (Obsługa formularza)
+        //[HttpPost]
+        //public async Task<IActionResult> Login(LoginViewModel model)
+        //{
+        //    if (!ModelState.IsValid) return View(model);
+
+        //    var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+
+        //    if (result.Succeeded)
+        //    {
+        //        return RedirectToAction("Index", "Home");
+        //    }
+
+        //    ModelState.AddModelError("", "Nieprawidłowa nazwa użytkownika lub hasło");
+        //    return View(model);
+        //}
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -62,7 +77,7 @@ namespace UNChat.Controllers
 
             if (result.Succeeded)
             {
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Chat", "Chat"); // Przekierowanie na stronę czatu
             }
 
             ModelState.AddModelError("", "Nieprawidłowa nazwa użytkownika lub hasło");

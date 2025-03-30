@@ -10,8 +10,6 @@ namespace UNChat.Hubs
     public class ChatHub : Hub
     {
         private readonly UNChatDbContext _context;
-
-        // Słownik do przechowywania połączeń użytkowników
         private static readonly ConcurrentDictionary<string, string> _connections = new();
 
         public ChatHub(UNChatDbContext context)
@@ -19,19 +17,16 @@ namespace UNChat.Hubs
             _context = context;
         }
 
-        // Obsługa podłączenia użytkownika
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.UserIdentifier; // Pobranie ID zalogowanego użytkownika
+            var userId = Context.UserIdentifier;
             if (!string.IsNullOrEmpty(userId))
             {
-                _connections[userId] = Context.ConnectionId; // Przypisanie ConnectionId do użytkownika
+                _connections[userId] = Context.ConnectionId;
             }
-
             await base.OnConnectedAsync();
         }
 
-        // Obsługa rozłączenia użytkownika
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userId = Context.UserIdentifier;
@@ -39,11 +34,9 @@ namespace UNChat.Hubs
             {
                 _connections.TryRemove(userId, out _);
             }
-
             await base.OnDisconnectedAsync(exception);
         }
 
-        // Wysyłanie wiadomości do konkretnego użytkownika
         public async Task SendMessage(string senderId, string receiverId, string message)
         {
             var chatMessage = new ChatMessage
@@ -57,11 +50,16 @@ namespace UNChat.Hubs
             _context.ChatMessages.Add(chatMessage);
             await _context.SaveChangesAsync();
 
-            // Wysyłanie wiadomości tylko jeśli użytkownik jest podłączony
             if (_connections.TryGetValue(receiverId, out var connectionId))
             {
                 await Clients.Client(connectionId).SendAsync("ReceiveMessage", senderId, message);
             }
+            else
+            {
+                Console.WriteLine("Odbiorca nie jest połączony.");
+            }
         }
     }
+
 }
+
