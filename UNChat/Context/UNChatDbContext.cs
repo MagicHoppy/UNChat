@@ -10,5 +10,7 @@ namespace UNChat.Context
     public class UNChatDbContext : IdentityDbContext<User>
     {
         public UNChatDbContext(DbContextOptions<UNChatDbContext> options) : base(options) { }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
     }
 }
