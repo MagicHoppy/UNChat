@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ChatViewModel
+@{
     ViewData["Title"] = "Czat";
 }
 
@@ -11,7 +12,7 @@
 
     #chatContainer {
         display: flex;
-        height: 100vh;
+        height: 85vh;
     }
 
     #userList {
@@ -97,13 +98,21 @@
     </div>
 
     <div id="chatBox">
-        <input type="hidden" id="userId" value="@ViewBag.UserId" />
+        <input type="hidden" id="userId" value="@Model.UserId" />
         <h2 id="chatHeader">Wybierz użytkownika</h2>
         <div id="messages"></div>
-        <div>
+        <div style="position: relative; display: inline-block;">
             <input type="text" id="messageInput" placeholder="Wpisz wiadomość..." />
+            <button id="emojiButton">😀</button>
+            <div id="emojiPicker" class="emoji-container" style="display: none; position: absolute; bottom: 40px; left: 0; background: white; border: 1px solid #ccc; padding: 5px; z-index: 100;">
+                @foreach (var emoji in Model.Emojis)
+                {
+                    <span class="emoji" style="cursor: pointer; font-size: 20px; margin: 5px;">@emoji</span>
+                }
+            </div>
             <button id="sendButton">Wyślij</button>
         </div>
+
     </div>
 </div>
 

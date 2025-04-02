@@ -79,6 +79,33 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     }
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const emojiButton = document.getElementById("emojiButton");
+    const emojiPicker = document.getElementById("emojiPicker");
+    const messageInput = document.getElementById("messageInput");
+
+    // Toggle emoji picker
+    emojiButton.addEventListener("click", () => {
+        emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+    });
+
+    // Insert emoji into input field
+    document.querySelectorAll(".emoji").forEach(emoji => {
+        emoji.addEventListener("click", function () {
+            messageInput.value += this.innerText;
+            emojiPicker.style.display = "none"; // Hide after selection
+        });
+    });
+
+    // Hide emoji picker when clicking outside
+    document.addEventListener("click", (event) => {
+        if (!emojiPicker.contains(event.target) && event.target !== emojiButton) {
+            emojiPicker.style.display = "none";
+        }
+    });
+});
+
+
 // Real-time message receiving via SignalR
 connection.on("ReceiveMessage", (senderId, message) => {
     if (senderId === selectedReceiverId) {
@@ -94,5 +121,6 @@ function addMessage(type, message) {
     messagesDiv.appendChild(messageElement);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 loadUsers();

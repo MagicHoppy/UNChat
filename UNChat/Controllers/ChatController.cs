@@ -22,8 +22,13 @@ namespace UNChat.Controllers
         public async Task<IActionResult> Chat()
         {
             var user = await _userManager.GetUserAsync(User);
-            ViewBag.UserId = user?.Id; // Przekazujemy UserId do widoku
-            return View();
+
+            var model = new ChatViewModel
+            {
+                UserId = user?.Id, // Assign the logged-in user's ID
+            };
+
+            return View(model);
         }
         [HttpGet("/api/users")]
         public async Task<IActionResult> GetUsers()
