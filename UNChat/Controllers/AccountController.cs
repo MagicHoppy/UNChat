@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -17,10 +19,6 @@ namespace UNChat.Controllers
             _signInManager = signInManager;
         }
 
-        // ==============================
-        // 🚀 1️⃣ WIDOKI HTML (Dla użytkowników na stronie)
-        // ==============================
-
         // Rejestracja - GET (Widok formularza)
         [HttpGet]
         public IActionResult Register() => View();
@@ -37,7 +35,7 @@ namespace UNChat.Controllers
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Chat", "Chat");
             }
 
             foreach (var error in result.Errors)
@@ -53,21 +51,6 @@ namespace UNChat.Controllers
         public IActionResult Login() => View();
 
         // Logowanie - POST (Obsługa formularza)
-        //[HttpPost]
-        //public async Task<IActionResult> Login(LoginViewModel model)
-        //{
-        //    if (!ModelState.IsValid) return View(model);
-
-        //    var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
-
-        //    if (result.Succeeded)
-        //    {
-        //        return RedirectToAction("Index", "Home");
-        //    }
-
-        //    ModelState.AddModelError("", "Nieprawidłowa nazwa użytkownika lub hasło");
-        //    return View(model);
-        //}
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -93,7 +76,54 @@ namespace UNChat.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        
-        
+        // Logowanie przez Google
+        [HttpGet]
+        public IActionResult ExternalLogin(string provider, string returnUrl = "/")
+        {
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+
+        public async Task<IActionResult> ExternalLoginCallback(string returnUrl = "/")
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false);
+            if (signInResult.Succeeded)
+            {
+                return LocalRedirect(returnUrl);
+            }
+
+            var email = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            
+            if (email == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var firstName = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
+            var lastName = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value;
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                Name = $"{firstName} {lastName}".Trim()
+            };
+            var result = await _userManager.CreateAsync(user);
+            if (result.Succeeded)
+            {
+                await _userManager.AddLoginAsync(user, info);
+                await _signInManager.SignInAsync(user, false);
+                return LocalRedirect(returnUrl);
+            }
+
+            return RedirectToAction("Login");
+        }
+
     }
 }

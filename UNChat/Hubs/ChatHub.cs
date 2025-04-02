@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using UNChat.Models;
 
 namespace UNChat.Hubs
 {
+    [Authorize]
     public class ChatHub : Hub
     {
         private readonly UNChatDbContext _context;

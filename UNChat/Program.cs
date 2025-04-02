@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using UNChat.Context;
 using UNChat.Hubs;
 using UNChat.Models;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
@@ -19,8 +20,31 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<UNChatDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login"; // Œcie¿ka do logowania
+    options.AccessDeniedPath = "/Account/Login"; // Œcie¿ka, gdy brak dostêpu
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Czas trwania sesji
+    options.SlidingExpiration = true; // Odnawianie ciasteczka przy aktywnoœci
+});
+
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.CallbackPath = "/signin-google";
+    });
+
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
+
+//builder.Services.AddAuthorization(options =>
+//{
+//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Przyk³adowa polityka
+//});
+
 
 var app = builder.Build();
 
@@ -43,5 +67,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapHub<ChatHub>("/chatHub");
+
+app.MapControllerRoute(
+    name: "account",
+    pattern: "{controller=Account}/{action=Login}/{id?}");
+
 
 app.Run();

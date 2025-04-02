@@ -4,9 +4,11 @@ using UNChat.Models;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UNChat.Controllers
 {
+    [Authorize]
     public class ChatController : Controller
     {
         private readonly UserManager<User> _userManager;
