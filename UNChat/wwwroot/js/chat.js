@@ -15,13 +15,70 @@ async function loadUsers() {
     const userList = document.getElementById("users");
 
     users.forEach(user => {
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.justifyContent = "space-between";
+        container.style.alignItems = "center";
+        container.style.marginBottom = "5px";
+
         const button = document.createElement("button");
         button.className = "user-btn";
         button.textContent = user.name;
         button.dataset.id = user.id;
         button.addEventListener("click", () => selectUser(user.id, user.name));
-        userList.appendChild(button);
+
+        const friendButton = document.createElement("button");
+        friendButton.textContent = "➕";
+        friendButton.className = "friend-btn";
+        friendButton.title = "Dodaj do znajomych";
+        friendButton.style.marginLeft = "5px";
+        friendButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Żeby nie wywołać selectUser
+            addFriend(user.id);
+        });
+
+        container.appendChild(button);
+        container.appendChild(friendButton);
+        userList.appendChild(container);
     });
+}
+async function loadFriends() {
+    const userId = document.getElementById("userId").value;
+    const response = await fetch(`/api/friends/${userId}`);
+    const friends = await response.json();
+    const friendsList = document.getElementById("friends");
+    friendsList.innerHTML = ""; // wyczyść przed załadowaniem
+
+    friends.forEach(friend => {
+        const button = document.createElement("button");
+        button.className = "user-btn";
+        button.textContent = friend.name;
+        button.dataset.id = friend.id;
+        button.addEventListener("click", () => selectUser(friend.id, friend.userName));
+        friendsList.appendChild(button);
+    });
+}
+
+async function addFriend(friendId) {
+    const currentUserId = document.getElementById("userId").value;
+
+    try {
+        const response = await fetch("/api/friends/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ friend1Id: currentUserId, friend2Id: friendId })
+        });
+
+        if (response.ok) {
+            alert("Dodano do znajomych!");
+            loadFriends();
+        } else {
+            const err = await response.text();
+            alert("Błąd: " + err);
+        }
+    } catch (error) {
+        console.error("Błąd dodawania znajomego:", error);
+    }
 }
 
 async function selectUser(userId, userName) {
@@ -122,5 +179,7 @@ function addMessage(type, message) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+console.log("aaaaaaa");
 
 loadUsers();
+loadFriends();

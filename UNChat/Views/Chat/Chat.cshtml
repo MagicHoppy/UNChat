@@ -89,6 +89,28 @@
         cursor: pointer;
         border-radius: 5px;
     }
+
+    .friend-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .friend-btn:hover {
+            background: #218838;
+        }
+
+    #friendList {
+        width: 300px;
+        background: #f0f0f0;
+        padding: 10px;
+        overflow-y: auto;
+        border-left: 1px solid #ccc;
+    }
+
 </style>
 
 <div id="chatContainer">
@@ -112,9 +134,14 @@
             </div>
             <button id="sendButton">Wyślij</button>
         </div>
+    </div>
 
+    <div id="friendList">
+        <h3>Znajomi</h3>
+        <div id="friends"></div>
     </div>
 </div>
 
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-<script src="~/js/chat.js"></script>
+<script src="~/js/chat.js?v=@DateTime.UtcNow.Ticks"></script>
