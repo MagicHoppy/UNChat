@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using UNChat.Models;
 using System.Threading.Tasks;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using UNChat.Context;
 
 namespace UNChat.Controllers
 {
@@ -12,10 +12,13 @@ namespace UNChat.Controllers
     public class ChatController : Controller
     {
         private readonly UserManager<User> _userManager;
+        private readonly UNChatDbContext _context;
 
-        public ChatController(UserManager<User> userManager)
+
+        public ChatController(UserManager<User> userManager, UNChatDbContext context)
         {
             _userManager = userManager;
+            _context = context;
         }
 
         [HttpGet]
@@ -26,6 +29,10 @@ namespace UNChat.Controllers
             var model = new ChatViewModel
             {
                 UserId = user?.Id, // Assign the logged-in user's ID
+                Emojis = _context.Emojis
+                .Select(e => e.Symbol)
+                .ToList()
+
             };
 
             return View(model);

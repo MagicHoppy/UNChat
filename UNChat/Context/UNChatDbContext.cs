@@ -5,12 +5,11 @@ using UNChat.Models;
 
 namespace UNChat.Context
 {
-    // Kontekst bazy danych
- 
     public class UNChatDbContext : IdentityDbContext<User>
     {
         public UNChatDbContext(DbContextOptions<UNChatDbContext> options) : base(options) { Database.EnsureCreated(); }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<Emoji> Emojis { get; set; }
 
     }
 }
