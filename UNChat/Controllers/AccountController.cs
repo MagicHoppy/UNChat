@@ -97,7 +97,7 @@ namespace UNChat.Controllers
             var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false);
             if (signInResult.Succeeded)
             {
-                return LocalRedirect(returnUrl);
+                return RedirectToAction("Chat", "Chat");
             }
 
             var email = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -119,7 +119,7 @@ namespace UNChat.Controllers
             {
                 await _userManager.AddLoginAsync(user, info);
                 await _signInManager.SignInAsync(user, false);
-                return LocalRedirect(returnUrl);
+                return RedirectToAction("Chat", "Chat");
             }
 
             return RedirectToAction("Login");
