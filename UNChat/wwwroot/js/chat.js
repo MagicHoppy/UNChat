@@ -25,7 +25,6 @@ async function loadUsers() {
         button.className = "user-btn";
         button.textContent = user.name;
         button.dataset.id = user.id;
-        button.addEventListener("click", () => selectUser(user.id, user.name));
 
         const friendButton = document.createElement("button");
         friendButton.textContent = "➕";
@@ -50,12 +49,31 @@ async function loadFriends() {
     friendsList.innerHTML = ""; // wyczyść przed załadowaniem
 
     friends.forEach(friend => {
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.justifyContent = "space-between";
+        container.style.alignItems = "center";
+        container.style.marginBottom = "5px";
+
         const button = document.createElement("button");
         button.className = "user-btn";
         button.textContent = friend.name;
         button.dataset.id = friend.id;
-        button.addEventListener("click", () => selectUser(friend.id, friend.userName));
-        friendsList.appendChild(button);
+        button.addEventListener("click", () => selectUser(friend.id, friend.name));
+       // console.log(friend.name);
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "-";
+        removeButton.className = "friend-remove-btn";
+        removeButton.title = "usun z znajomych";
+        removeButton.style.marginLeft = "5px";
+        removeButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Żeby nie wywołać selectUser
+            removeFriend(friend.id);
+        });
+        container.appendChild(button);
+        container.appendChild(removeButton);
+        friendsList.appendChild(container);
+
     });
 }
 
@@ -81,13 +99,42 @@ async function addFriend(friendId) {
     }
 }
 
+async function removeFriend(friendId) {
+    const currentUserId = document.getElementById("userId").value;
+
+    try {
+        const response = await fetch("/api/friends/remove", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ friend1Id: currentUserId, friend2Id: friendId })
+        });
+        
+        if (response.ok) {
+            alert("usunieto z znajomych!");
+            loadFriends();
+        } else {
+            const err = await response.text();
+            alert("Błąd: " + err);
+        }
+    } catch (error) {
+        console.error("Błąd usuwania znajomego:", error);
+    }
+}
+
+
 async function selectUser(userId, userName) {
     selectedReceiverId = userId;
     document.getElementById("chatHeader").textContent = `Czat z ${userName}`;
 
     // Highlight selected user
-    document.querySelectorAll(".user-btn").forEach(btn => btn.classList.remove("active"));
-    document.querySelector(`[data-id='${userId}']`).classList.add("active");
+    // Usuwamy 'active' tylko z przycisków w sekcji znajomych
+    document.querySelectorAll("#friends .user-btn").forEach(btn => btn.classList.remove("active"));
+
+    // Dodajemy 'active' tylko jeśli kliknięto znajomego
+    const selectedButton = document.querySelector(`#friends .user-btn[data-id='${userId}']`);
+    if (selectedButton) {
+        selectedButton.classList.add("active");
+    }
 
     document.getElementById("messages").innerHTML = ""; // Clear previous messages
 
@@ -179,7 +226,6 @@ function addMessage(type, message) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-console.log("aaaaaaa");
 
 loadUsers();
 loadFriends();

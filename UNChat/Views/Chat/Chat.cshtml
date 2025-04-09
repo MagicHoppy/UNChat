@@ -41,6 +41,9 @@
         color: white;
     }
 
+       
+
+
     #chatBox {
         flex-grow: 1;
         display: flex;
@@ -98,6 +101,19 @@
         border-radius: 5px;
         cursor: pointer;
     }
+     .friend-btn:hover, .friend-btn.active {
+            background: #0078ff;
+            color: white;
+        }
+
+    .friend-remove-btn {
+        background: red;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
         .friend-btn:hover {
             background: #218838;
@@ -113,11 +129,18 @@
 
 </style>
 
+
+
 <div id="chatContainer">
     <div id="userList">
         <h3>Użytkownicy</h3>
         <div id="users"></div>
     </div>
+    <div id="friendList">
+        <h3>Znajomi</h3>
+        <div id="friends"></div>
+    </div>
+
 
     <div id="chatBox">
         <input type="hidden" id="userId" value="@Model.UserId" />
@@ -134,11 +157,6 @@
             </div>
             <button id="sendButton">Wyślij</button>
         </div>
-    </div>
-
-    <div id="friendList">
-        <h3>Znajomi</h3>
-        <div id="friends"></div>
     </div>
 </div>
 
