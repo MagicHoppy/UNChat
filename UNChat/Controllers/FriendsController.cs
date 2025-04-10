@@ -55,6 +55,21 @@ namespace UNChat.Controllers
 
             return Ok("Zaproszenie zaakceptowane.");
         }
+        [HttpPost("/api/friends/deny")]
+        public async Task<IActionResult> DenyFriend([FromBody] Friend model)
+        {
+            var friendship = await _context.Friends
+                .FirstOrDefaultAsync(f =>
+                    f.Friend1Id == model.Friend1Id && f.Friend2Id == model.Friend2Id);
+
+            if (friendship == null)
+                return NotFound("Zaproszenie nie istnieje.");
+            _context.Friends.Remove(friendship);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Zaproszenie odrzucone.");
+        }
 
 
         [HttpPost("/api/friends/remove")]

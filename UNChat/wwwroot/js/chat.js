@@ -36,6 +36,8 @@ async function loadUsers() {
             addFriend(user.id);
         });
 
+     
+
         container.appendChild(button);
         container.appendChild(friendButton);
         userList.appendChild(container);
@@ -256,8 +258,25 @@ async function loadFriendRequests() {
             loadFriendRequests();
         });
 
+        const denyButton = document.createElement("button");
+        denyButton.textContent = "X";
+        denyButton.title = "Odrzuc";
+        denyButton.addEventListener("click", async () => {
+            await fetch("/api/friends/deny", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ friend1Id: request.id, friend2Id: userId })
+            });
+            alert("Odrzucono zaproszenie");
+            loadFriends();
+            loadFriendRequests();
+        });
+
+
+
         container.appendChild(name);
         container.appendChild(acceptButton);
+        container.appendChild(denyButton);
         requestList.appendChild(container);
     });
 }
