@@ -24,7 +24,7 @@ export async function selectUser(userId, userName) {
 
         messages.forEach(msg => {
             const type = msg.senderId === senderId ? "sent" : "received";
-            addMessage(type, msg.message);
+            addMessage(type, msg.message, msg.timestamp);
         });
     } catch (error) {
         console.error("Błąd ładowania wiadomości:", error);
@@ -48,17 +48,19 @@ export function setupChat() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ senderId, receiverId: selectedReceiverId, message })
             });
-
-            addMessage("sent", message);
+            const now = new Date().toISOString();
+            addMessage("sent", message, now);
             messageInput.value = "";
+            console.log("elo");
         } catch (error) {
             console.error("Błąd wysyłania wiadomości:", error);
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, message) => {
+    connection.on("ReceiveMessage", (senderId, message,timestamp) => {
         if (senderId === selectedReceiverId) {
-            addMessage("received", message);
+            console.log(timestamp);
+            addMessage("received", message,timestamp);
         }
     });
 }

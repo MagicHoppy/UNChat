@@ -39,7 +39,7 @@ public class ChatApiController : ControllerBase
         await _context.SaveChangesAsync();
 
         var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        await hubContext.Clients.User(model.ReceiverId).SendAsync("ReceiveMessage", model.SenderId, model.Message);
+        await hubContext.Clients.User(model.ReceiverId).SendAsync("ReceiveMessage", model.SenderId, model.Message,chatMessage.Timestamp);
 
         return Ok("Message sent successfully.");
     }

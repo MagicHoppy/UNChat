@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+ï»¿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -25,10 +25,10 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login"; // Œcie¿ka do logowania
-    options.AccessDeniedPath = "/Account/Login"; // Œcie¿ka, gdy brak dostêpu
+    options.LoginPath = "/Account/Login"; // Å’cieÂ¿ka do logowania
+    options.AccessDeniedPath = "/Account/Login"; // Å’cieÂ¿ka, gdy brak dostÃªpu
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Czas trwania sesji
-    options.SlidingExpiration = true; // Odnawianie ciasteczka przy aktywnoœci
+    options.SlidingExpiration = true; // Odnawianie ciasteczka przy aktywnoÅ“ci
 });
 
 builder.Services.AddAuthentication()
@@ -40,12 +40,15 @@ builder.Services.AddAuthentication()
     });
 
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+    });
 
 //builder.Services.AddAuthorization(options =>
 //{
-//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Przyk³adowa polityka
+//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // PrzykÂ³adowa polityka
 //});
 
 

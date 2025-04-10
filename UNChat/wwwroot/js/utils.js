@@ -1,7 +1,12 @@
-﻿export function addMessage(type, message) {
+﻿export function addMessage(type, message, time=null) {
     const messagesDiv = document.getElementById("messages");
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type}`;
+    if (time) {
+        const date = new Date(time);
+        const formattedTime = formatMessageTime(date);
+        messageElement.title = `Wysłano ${formattedTime}`;
+    }
 
     if (message.startsWith("http") && message.includes(".gif")) {
         const img = document.createElement("img");
@@ -17,4 +22,24 @@
 
     messagesDiv.appendChild(messageElement);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+function formatMessageTime(date) {
+    const today = new Date();
+    const messageDate = new Date(date);
+    const diffTime = today - messageDate;
+    const dayOfWeek = messageDate.toLocaleDateString('pl-PL', { weekday: 'short' });
+    const dayOfMonth = messageDate.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+
+    // Jeśli wiadomość jest dzisiejsza
+    if (messageDate.toDateString() === today.toDateString()) {
+        return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Jeśli wiadomość jest starsza niż 7 dni
+    if (diffTime > 7 * 24 * 60 * 60 * 1000) {
+        return `${dayOfMonth} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; 
+    }
+
+    // Jeśli ten sam tydzień (np. ostatni czwartek, jeśli dziś jest czwartek)
+    return `${dayOfWeek} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
