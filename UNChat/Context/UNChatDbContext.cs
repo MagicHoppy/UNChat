@@ -15,10 +15,14 @@ namespace UNChat.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            // Composite key
             modelBuilder.Entity<Friend>()
                 .HasKey(f => new { f.Friend1Id, f.Friend2Id });
+
+            modelBuilder.Entity<Friend>()
+                .Property(f => f.Status)
+                .HasConversion<string>(); // zapis jako string w bazie
         }
+
 
     }
 }

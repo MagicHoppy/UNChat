@@ -7,7 +7,7 @@ public static class DbInitializer
     {
         context.Database.EnsureCreated();
 
-        if (context.Emojis.Any()) return;
+       if (context.Emojis.Any()) return;
 
         var emojis = new Emoji[]
         {
