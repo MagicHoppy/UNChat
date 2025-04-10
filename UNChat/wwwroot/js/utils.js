@@ -2,7 +2,17 @@
     const messagesDiv = document.getElementById("messages");
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type}`;
-    messageElement.textContent = message;
+
+    if (message.startsWith("http") && message.includes(".gif")) {
+        const img = document.createElement("img");
+        img.src = message;
+        img.style.maxWidth = "200px";
+        messageElement.appendChild(img);
+    } else {
+        messageElement.textContent = message;
+    }
+
     messagesDiv.appendChild(messageElement);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
