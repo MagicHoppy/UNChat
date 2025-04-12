@@ -11,6 +11,8 @@ namespace UNChat.Context
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<Emoji> Emojis { get; set; }
         public DbSet<Friend> Friends { get; set; }
+        public DbSet<ChatAttachment> ChatAttachments { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

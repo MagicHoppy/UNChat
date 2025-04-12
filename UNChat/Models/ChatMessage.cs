@@ -7,5 +7,8 @@
         public string ReceiverId { get; set; }
         public string Message { get; set; }
         public DateTime Timestamp { get; set; }
+
+        public List<ChatAttachment> Attachments { get; set; } = new();
+
     }
 }
