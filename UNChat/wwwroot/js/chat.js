@@ -24,7 +24,16 @@ export async function selectUser(userId, userName) {
 
         messages.forEach(msg => {
             const type = msg.senderId === senderId ? "sent" : "received";
-            addMessage(type, msg.message, msg.timestamp);
+
+            if (msg.message) {
+                addMessage(type, msg.message, msg.timestamp);
+            }
+
+            if (msg.attachments && msg.attachments.length > 0) {
+                msg.attachments.forEach(att => {
+                    addMessage(type, att.filePath, msg.timestamp);
+                });
+            }
         });
     } catch (error) {
         console.error("Błąd ładowania wiadomości:", error);
@@ -35,35 +44,50 @@ export function setupChat() {
     document.getElementById("sendButton").addEventListener("click", async () => {
         const messageInput = document.getElementById("messageInput");
         const senderId = document.getElementById("userId").value;
+        const attachmentInput = document.getElementById("attachmentInput");
+        const file = attachmentInput.files[0];
         const message = messageInput.value.trim();
 
-        if (!selectedReceiverId || !message) {
-            alert("Wybierz odbiorcę i wpisz wiadomość!");
+        if (!selectedReceiverId || (!message && !file)) {
+            alert("Wpisz wiadomość lub wybierz plik!");
             return;
         }
 
-        try {
-            await fetch("/api/chat/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ senderId, receiverId: selectedReceiverId, message })
-            });
-            const now = new Date().toISOString();
-            addMessage("sent", message, now);
-            messageInput.value = "";
-            console.log("elo");
-        } catch (error) {
-            console.error("Błąd wysyłania wiadomości:", error);
+        const formData = new FormData();
+        formData.append("senderId", senderId);
+        formData.append("receiverId", selectedReceiverId);
+        formData.append("message", message);
+        if (file) formData.append("file", file);
+
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.message) addMessage("sent", data.message, data.timestamp);
+        if (data.attachmentUrl) addMessage("sent", data.attachmentUrl, data.timestamp);
+
+        messageInput.value = "";
+        attachmentInput.value = null;
+
+        }
+    );
+
+    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp) => {
+        if (senderId !== selectedReceiverId) return;
+
+        if (message) {
+            addMessage("received", message, timestamp);
+        }
+
+        if (attachmentUrl) {
+            addMessage("received", attachmentUrl, timestamp); // renderuje jako obrazek/link
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, message,timestamp) => {
-        if (senderId === selectedReceiverId) {
-            console.log(timestamp);
-            addMessage("received", message,timestamp);
-        }
-    });
 }
+
 
 
 

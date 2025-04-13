@@ -1,28 +1,43 @@
-﻿export function addMessage(type, message, time=null) {
+﻿export function addMessage(type, message, time = null) {
     const messagesDiv = document.getElementById("messages");
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type}`;
+
     if (time) {
         const date = new Date(time);
         const formattedTime = formatMessageTime(date);
         messageElement.title = `Wysłano ${formattedTime}`;
     }
 
-    if (message.startsWith("http") && message.includes(".gif")) {
+    if ((message.startsWith("/uploads/") || message.startsWith("http")) && (message.endsWith(".gif") || message.endsWith(".jpg") || message.endsWith(".png"))) {
         const img = document.createElement("img");
         img.src = message;
         img.style.maxWidth = "200px";
         messageElement.appendChild(img);
-    } else if (message.startsWith("<img")) {
-        // gdy wiadomość to HTML (np. po kliknięciu GIF-a)
-        messageElement.innerHTML = message;
-    } else {
+    } else if (message.startsWith("/uploads/") && /\.(pdf|txt|zip|docx?|xlsx?)$/i.test(message)) {
+        const link = document.createElement("a");
+        link.href = message;
+
+        // Wyciągnij nazwę pliku z końcówki URL-a
+        const fullFileName = message.split("/").pop();
+
+        // Usuń GUID — zostaw tylko część po "_"
+        const cleanFileName = fullFileName.split("_").slice(1).join("_");
+
+        link.textContent = `Zalacznik ${cleanFileName}`;
+        link.download = cleanFileName;
+        link.target = "_blank";
+
+        messageElement.appendChild(link);
+    }
+ else {
         messageElement.textContent = message;
     }
 
     messagesDiv.appendChild(messageElement);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 function formatMessageTime(date) {
     const today = new Date();
     const messageDate = new Date(date);
