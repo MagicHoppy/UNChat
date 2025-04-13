@@ -22,19 +22,16 @@ export async function searchGifs(query) {
             img.addEventListener("click", async () => {
                 const senderId = document.getElementById("userId").value;
                 if (!selectedReceiverId) return;
-
-                try {
-                    await fetch("/api/chat/send", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ senderId, receiverId: selectedReceiverId, message: gifUrl })
-                    });
-
-                    addMessage("sent", `<img src="${gifUrl}" style="max-width: 150px;" />`);
-                } catch (err) {
-                    console.error("Błąd wysyłania GIF-a:", err);
-                }
-
+                const formData = new FormData();
+                formData.append("senderId", senderId);
+                formData.append("receiverId", selectedReceiverId);
+                formData.append("message", gifUrl);
+                const res = await fetch("/api/chat/send", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                addMessage("sent", data.message);
                 resultsDiv.style.display = "none";
             });
 

@@ -58,7 +58,7 @@ export function setupChat() {
         formData.append("receiverId", selectedReceiverId);
         formData.append("message", message);
         if (file) formData.append("file", file);
-
+        console.log(senderId,selectedReceiverId,message,file);
         const res = await fetch("/api/chat/send", {
             method: "POST",
             body: formData
