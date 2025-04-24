@@ -31,7 +31,7 @@ public class ChatApiController : ControllerBase
         {
             SenderId = senderId,
             ReceiverId = receiverId,
-            Message = message,
+            Message = message ?? string.Empty,
             Timestamp = DateTime.UtcNow
         };
 
