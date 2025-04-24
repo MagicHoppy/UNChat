@@ -14,7 +14,29 @@
         img.src = message;
         img.style.maxWidth = "200px";
         messageElement.appendChild(img);
-    } else if (message.startsWith("/uploads/") && /\.(pdf|txt|zip|docx?|xlsx?)$/i.test(message)) {
+    }
+    else if (message.startsWith("/uploads/") && message.endsWith(".mp4")) {
+        const vid = document.createElement("video");
+        vid.controls = true;
+        const source = document.createElement("source");
+        source.src = message;
+        source.type = "video/mp4";
+        vid.style.maxWidth = "300px";
+        vid.appendChild(source);
+        messageElement.appendChild(vid);
+    }
+    else if (message.startsWith("/uploads/") && message.endsWith(".mp3")) {
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        const source = document.createElement("source");
+        source.src = message;
+        source.type = "audio/mp3";
+        audio.style.minWidth = "100px";
+        audio.style.maxWidth = "300px";
+        audio.appendChild(source);
+        messageElement.appendChild(audio);
+    }
+    else if (message.startsWith("/uploads/") && /\.(pdf|txt|zip|docx?|xlsx?)$/i.test(message)) {
         const link = document.createElement("a");
         link.href = message;
 
