@@ -5,25 +5,28 @@ export async function loadUsers() {
     const users = await response.json();
     const userList = document.getElementById("users");
 
-     users.forEach(user => {
+    userList.innerHTML = ""; // Clear old content first
+
+    users.forEach(user => {
         const container = document.createElement("div");
-        container.style.display = "flex";
-        container.style.justifyContent = "space-between";
-        container.style.alignItems = "center";
-        container.style.marginBottom = "5px";
+        container.className = "d-flex justify-content-between align-items-center mb-2"; // Bootstrap flex
 
         const button = document.createElement("button");
-        button.className = "user-btn";
+        button.className = "btn btn-outline-primary flex-grow-1 me-2"; // Bootstrap button
         button.textContent = user.name;
         button.dataset.id = user.id;
+        button.addEventListener("click", () => {
+            import("./chat.js").then(module => {
+                module.selectUser(user.id, user.name);
+            });
+        });
 
         const friendButton = document.createElement("button");
         friendButton.textContent = "➕";
-        friendButton.className = "friend-btn";
+        friendButton.className = "btn btn-success"; // Bootstrap button
         friendButton.title = "Dodaj do znajomych";
-        friendButton.style.marginLeft = "5px";
         friendButton.addEventListener("click", (e) => {
-            e.stopPropagation(); // Żeby nie wywołać selectUser
+            e.stopPropagation(); // To prevent selecting user
             addFriend(user.id);
         });
 

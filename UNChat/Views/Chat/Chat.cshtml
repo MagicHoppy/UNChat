@@ -3,174 +3,72 @@
     ViewData["Title"] = "Czat";
 }
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-    }
-
-    #chatContainer {
-        display: flex;
-        height: 85vh;
-    }
-
-    #userList {
-        width: 300px;
-        background: #f0f0f0;
-        padding: 10px;
-        overflow-y: auto;
-        border-right: 1px solid #ccc;
-    }
-
-    .user-btn {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        border: none;
-        background: #fff;
-        cursor: pointer;
-        text-align: left;
-        font-size: 16px;
-        margin-bottom: 5px;
-        border-radius: 5px;
-    }
-
-    .user-btn:hover, .user-btn.active {
-        background: #0078ff;
-        color: white;
-    }
-
-       
-
-
-    #chatBox {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 10px;
-    }
-
-    #messages {
-        flex-grow: 1;
-        overflow-y: auto;
-        border: 1px solid #ccc;
-        padding: 10px;
-        background: #f9f9f9;
-    }
-
-    .message {
-        margin: 5px 0;
-        padding: 10px;
-        border-radius: 10px;
-        max-width: 70%;
-    }
-
-    .message.sent {
-        background: #0078ff;
-        color: white;
-        align-self: flex-end;
-    }
-
-    .message.received {
-        background: #e0e0e0;
-        align-self: flex-start;
-    }
-
-    #messageInput {
-        width: 80%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    #sendButton {
-        padding: 10px 20px;
-        border: none;
-        background: #0078ff;
-        color: white;
-        cursor: pointer;
-        border-radius: 5px;
-    }
-
-    .friend-btn {
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-     .friend-btn:hover, .friend-btn.active {
-            background: #0078ff;
-            color: white;
-        }
-
-    .friend-remove-btn {
-        background: red;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-        .friend-btn:hover {
-            background: #218838;
-        }
-
-    #friendList {
-        width: 300px;
-        background: #f0f0f0;
-        padding: 10px;
-        overflow-y: auto;
-        border-left: 1px solid #ccc;
-    }
-
-</style>
 
 
 
-<div id="chatContainer">
-    <div id="userList">
-        <h3>Użytkownicy</h3>
-        <div id="users"></div>
-    </div>
-    <div id="friendList">
-        <h3>Znajomi</h3>
-        <div id="friends"></div>
+<div id="chatContainer" class="d-flex vh-85">
+    <!-- Users List -->
+    <div id="userList" class="bg-light p-3 overflow-auto border-end" style="width: 300px;">
+        <h5 class="fw-bold mb-3">Użytkownicy</h5>
+        <div id="users" class="d-flex flex-column gap-2"></div>
     </div>
 
-
-    <div id="chatBox">
+    <!-- Main Chat Area -->
+    <div id="chatBox" class="flex-grow-1 d-flex flex-column p-3">
         <input type="hidden" id="userId" value="@Model.UserId" />
-        <h2 id="chatHeader">Wybierz użytkownika</h2>
-        <div id="messages"></div>
-        <div style="position: relative; display: inline-block;">
-            <input type="text" id="messageInput" placeholder="Wpisz wiadomość..." />
-            <button id="emojiButton">😀</button>
-            <div id="emojiPicker" class="emoji-container" style="display: none; position: absolute; bottom: 40px; left: 0; background: white; border: 1px solid #ccc; padding: 5px; z-index: 100;">
-                @foreach (var emoji in Model.Emojis)
-                {
-                    <span class="emoji" style="cursor: pointer; font-size: 20px; margin: 5px;">@emoji</span>
-                }
+        <h4 id="chatHeader" class="mb-3">Wybierz użytkownika</h4>
+
+        <div id="messages" class="flex-grow-1 overflow-auto border rounded p-3 bg-light mb-3"></div>
+
+        <div class="d-flex flex-column gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center flex-grow-1 position-relative">
+                    <input type="text" id="messageInput"
+                           class="form-control flex-grow-1 me-2"
+                           placeholder="Wpisz wiadomość..." />
+
+                    <button id="emojiButton" class="btn btn-light flex-shrink-0">
+                        😀
+                    </button>
+
+                    <div id="emojiPicker" class="emoji-container border rounded bg-white p-2 mt-1"
+                         style="display: none; position: absolute; bottom: 100%; right: 0; z-index: 100;">
+                        @foreach (var emoji in Model.Emojis)
+                        {
+                            <span class="emoji" style="cursor: pointer; font-size: 20px; margin: 5px;">@emoji</span>
+                        }
+                    </div>
+                </div>
+                <button id="sendButton" class="btn btn-primary">Wyślij</button>
             </div>
-            <input type="text" id="gifSearchInput" placeholder="Szukaj GIF-a..." />
-            <button id="gifSearchButton">🔍</button>
-            <div id="gifResults" style="display: none; position: absolute; background: white; border: 1px solid #ccc; padding: 10px; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
 
-            <button id="sendButton">Wyślij</button>
-            <input type="file" id="attachmentInput" />
+            <input type="file" id="attachmentInput" class="form-control form-control-sm" />
+        </div>        <div class="d-flex align-items-center gap-2 mt-2">
+            <input type="text" id="gifSearchInput" class="form-control" placeholder="Szukaj GIF-a..." />
+            <button id="gifSearchButton" class="btn btn-outline-secondary">🔍</button>
         </div>
-    </div>
-    <div id="requestsContainer">
-        <h3>Zaproszenia</h3>
-        <div id="requests"></div>
+
+        <div id="gifResults" class="border rounded bg-white p-2 mt-2 overflow-auto" style="max-height: 200px; display: none;"></div>
     </div>
 
+    <!-- Friends List -->
+    <div id="friendList" class="bg-light p-3 overflow-auto border-start" style="width: 300px;">
+        <h5 class="fw-bold mb-3">Znajomi</h5>
+        <ul id="friends" class="list-group"></ul>
+    </div>
+
+    <!-- Friend Requests -->
+    <div id="requestsContainer" class="bg-light p-3 overflow-auto border-start" style="width: 300px;">
+        <h5 class="fw-bold mb-3">Zaproszenia</h5>
+        <div id="requests" class="d-flex flex-column gap-2"></div>
+    </div>
 </div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 <script type="module" src="~/js/main.js?v=@DateTime.UtcNow.Ticks"></script>
+<link href="~/css/chat.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
