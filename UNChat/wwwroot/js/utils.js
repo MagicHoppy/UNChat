@@ -5,16 +5,31 @@
     const wrapper = document.createElement("div");
     wrapper.className = `d-flex flex-column ${type === "sent" ? "align-items-end" : "align-items-start"} mb-2`;
 
+    // Create inner row
+    const row = document.createElement("div");
+    row.className = "d-flex align-items-center"; // Flexbox: [button][message]
+
+    // Create delete button
+    const deleteButton = document.createElement("button");
+    deleteButton.innerHTML = "&times;";
+    deleteButton.className = "delete-button btn btn-sm btn-danger me-2"; // Margin right
+    deleteButton.style.padding = "0.2rem 0.5rem";
+    deleteButton.style.visibility = "hidden"; // instead of display = "none"
+    wrapper.addEventListener("mouseenter", () => {
+        deleteButton.style.visibility = "visible"; // show it
+    });
+    wrapper.addEventListener("mouseleave", () => {
+        deleteButton.style.visibility = "hidden"; // hide it but keep space
+    });
+
+    // Handle delete button click
+    deleteButton.addEventListener("click", () => {
+        wrapper.remove();
+    });
+
     // Create message bubble
     const messageElement = document.createElement("div");
-    messageElement.className = `message ${type} p-2 rounded`;
-
-    // Optional timestamp tooltip
-    if (time) {
-        const date = new Date(time);
-        const formattedTime = formatMessageTime(date);
-        messageElement.title = `Wysłano ${formattedTime}`;
-    }
+    messageElement.className = `message ${type} p-2 rounded position-relative`;
 
     // Detect content type
     if ((message.startsWith("/uploads/") || message.startsWith("http")) && (message.endsWith(".gif") || message.endsWith(".jpg") || message.endsWith(".png"))) {
@@ -37,7 +52,6 @@
     else if (message.startsWith("/uploads/") && message.endsWith(".mp3")) {
         const audio = document.createElement("audio");
         audio.controls = true;
-        audio.className = "w-100 rounded";
         const source = document.createElement("source");
         source.src = message;
         source.type = "audio/mp3";
@@ -59,18 +73,19 @@
         messageElement.textContent = message;
     }
 
-    // Add timestamp below
     if (time) {
         const timeSpan = document.createElement("small");
-        timeSpan.className = "text-muted mt-1 d-block";
+        timeSpan.className = "text-muted mb-1 d-block";
         const date = new Date(time);
         timeSpan.textContent = formatMessageTime(date);
         wrapper.appendChild(timeSpan);
     }
-
-    // Add message to wrapper
-    wrapper.appendChild(messageElement);
-
+    if (type === "sent") {
+        row.appendChild(deleteButton);
+    }
+    row.appendChild(messageElement);
+    // Add row to wrapper
+    wrapper.appendChild(row);
     // Append wrapper
     messagesDiv.appendChild(wrapper);
 

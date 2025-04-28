@@ -30,7 +30,7 @@
 
 /* Message bubbles */
 .message {
-    max-width: 75%;
+    /*max-width: 95%;*/
     background-color: #e2e3e5; /* received background */
 }
 
@@ -43,4 +43,9 @@
 img, video, audio {
     border-radius: 0.5rem;
 }
+
+audio {
+    min-height: 40px;
+}
+
 
