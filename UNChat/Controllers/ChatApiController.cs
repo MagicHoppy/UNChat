@@ -63,10 +63,46 @@ public class ChatApiController : ControllerBase
         await _context.SaveChangesAsync();
 
         var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        await hubContext.Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp);
+        await hubContext.Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id);
 
-        return Ok(new { message, attachmentUrl = fileUrl, timestamp = chatMessage.Timestamp });
+        return Ok(new { message, attachmentUrl = fileUrl, timestamp = chatMessage.Timestamp,id = chatMessage.Id });
     }
+    [HttpDelete("remove/{messageId}")]
+    public async Task<IActionResult> RemoveMessage(int messageId)
+    {
+        var message = await _context.ChatMessages
+            .Include(m => m.Attachments)
+            .FirstOrDefaultAsync(m => m.Id == messageId);
+
+        if (message == null)
+        {
+            return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
+        }
+
+        // Delete attached files if any
+        if (message.Attachments != null && message.Attachments.Count > 0)
+        {
+            foreach (var attachment in message.Attachments)
+            {
+                var filePath = Path.Combine("wwwroot", attachment.FilePath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
+
+        _context.ChatMessages.Remove(message);
+        await _context.SaveChangesAsync();
+
+        // Notify clients via SignalR
+        var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        await hubContext.Clients.Users(message.SenderId, message.ReceiverId)
+            .SendAsync("MessageRemoved", messageId);
+
+        return Ok(new { message = "Wiadomość została usunięta." });
+    }
+
     [HttpGet("me")]
     [Authorize]
     public IActionResult GetCurrentUserId()
@@ -91,6 +127,7 @@ public class ChatApiController : ControllerBase
 
         var messageDtos = messages.Select(m => new ChatMessageDto
         {
+            Id = m.Id,
             SenderId = m.SenderId,
             Message = m.Message,
             Timestamp = m.Timestamp,

@@ -6,3 +6,4 @@
 connection.start()
     .then(() => console.log("Połączono z czatem"))
     .catch(err => console.error("Błąd połączenia:", err));
+

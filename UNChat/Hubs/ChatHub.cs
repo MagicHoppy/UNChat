@@ -39,28 +39,7 @@ namespace UNChat.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task SendMessage(string senderId, string receiverId, string message)
-        {
-            var chatMessage = new ChatMessage
-            {
-                SenderId = senderId,
-                ReceiverId = receiverId,
-                Message = message,
-                Timestamp = DateTime.UtcNow
-            };
 
-            _context.ChatMessages.Add(chatMessage);
-            await _context.SaveChangesAsync();
-
-            if (_connections.TryGetValue(receiverId, out var connectionId))
-            {
-                await Clients.Client(connectionId).SendAsync("ReceiveMessage", senderId, message);
-            }
-            else
-            {
-                Console.WriteLine("Odbiorca nie jest połączony.");
-            }
-        }
     }
 
 }

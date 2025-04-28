@@ -26,12 +26,12 @@ export async function selectUser(userId, userName) {
             const type = msg.senderId === senderId ? "sent" : "received";
 
             if (msg.message) {
-                addMessage(type, msg.message, msg.timestamp);
+                addMessage(type, msg.message, msg.timestamp,msg.id);
             }
 
             if (msg.attachments && msg.attachments.length > 0) {
                 msg.attachments.forEach(att => {
-                    addMessage(type, att.filePath, msg.timestamp);
+                    addMessage(type, att.filePath, msg.timestamp,msg.id);
                 });
             }
         });
@@ -70,12 +70,15 @@ export function setupChat() {
 
         const data = await res.json();
 
-        if (data.message) addMessage("sent", data.message, data.timestamp);
-        if (data.attachmentUrl) addMessage("sent", data.attachmentUrl, data.timestamp);
+        if (data.message) addMessage("sent", data.message, data.timestamp,data.id);
+        if (data.attachmentUrl) addMessage("sent", data.attachmentUrl, data.timestamp,data.id);
 
         messageInput.value = "";
         attachmentInput.value = null;
     }
+
+    
+
 
     sendButton.addEventListener("click", sendMessage);
 
@@ -86,17 +89,24 @@ export function setupChat() {
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp) => {
+    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp,id) => {
         if (senderId !== selectedReceiverId) return;
 
         if (message) {
-            addMessage("received", message, timestamp);
+            addMessage("received", message, timestamp, id);
         }
 
         if (attachmentUrl) {
-            addMessage("received", attachmentUrl, timestamp); // renderuje jako obrazek/link
+            addMessage("received", attachmentUrl, timestamp, id); // renderuje jako obrazek/link
         }
     });
+    connection.on("MessageRemoved", (messageId) => {
+        const messageElement = document.querySelector(`[data-message-id='${messageId}']`);
+        if (messageElement) {
+            messageElement.remove();
+        }
+    });
+   
 }
 
 

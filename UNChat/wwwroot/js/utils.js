@@ -1,9 +1,11 @@
-﻿export function addMessage(type, message, time = null) {
+﻿
+export function addMessage(type, message, time = null, messageId = null) {
     const messagesDiv = document.getElementById("messages");
 
     // Create wrapper
     const wrapper = document.createElement("div");
     wrapper.className = `d-flex flex-column ${type === "sent" ? "align-items-end" : "align-items-start"} mb-2`;
+    wrapper.dataset.messageId = messageId;
 
     // Create inner row
     const row = document.createElement("div");
@@ -14,17 +16,31 @@
     deleteButton.innerHTML = "&times;";
     deleteButton.className = "delete-button btn btn-sm btn-danger me-2"; // Margin right
     deleteButton.style.padding = "0.2rem 0.5rem";
-    deleteButton.style.visibility = "hidden"; // instead of display = "none"
+    deleteButton.style.visibility = "hidden"; 
     wrapper.addEventListener("mouseenter", () => {
-        deleteButton.style.visibility = "visible"; // show it
+        deleteButton.style.visibility = "visible"; 
     });
     wrapper.addEventListener("mouseleave", () => {
-        deleteButton.style.visibility = "hidden"; // hide it but keep space
+        deleteButton.style.visibility = "hidden"; 
     });
 
     // Handle delete button click
-    deleteButton.addEventListener("click", () => {
-        wrapper.remove();
+    deleteButton.addEventListener("click", async () => {
+        if (!messageId) return;
+
+        const res = await fetch(`/api/chat/remove/${messageId}`, {
+            method: "DELETE"
+        });
+
+        if (res.ok) {
+            wrapper.remove();
+
+        }
+        else {
+            console.log(res);
+        }
+
+
     });
 
     // Create message bubble
