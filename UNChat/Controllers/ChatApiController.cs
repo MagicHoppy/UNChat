@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UNChat.Context;
 using UNChat.Models;
 using UNChat.Hubs;
+using UNChat.DTOs;
 
 [Route("api/chat")]
 [ApiController]
@@ -101,6 +102,36 @@ public class ChatApiController : ControllerBase
             .SendAsync("MessageRemoved", messageId);
 
         return Ok(new { message = "Wiadomość została usunięta." });
+    }
+
+
+    [HttpPut("edit/{messageId}")]
+    public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.NewMessage))
+            return BadRequest("Brak nowej treści wiadomości.");
+
+        var message = await _context.ChatMessages
+            .Include(m => m.Attachments)
+            .FirstOrDefaultAsync(m => m.Id == messageId);
+
+        if (message == null)
+        {
+            return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
+        }
+
+        message.Message = dto.NewMessage;
+        //message.Timestamp = DateTime.UtcNow;
+
+        _context.ChatMessages.Update(message);
+        await _context.SaveChangesAsync();
+
+        // Notify clients via SignalR
+        var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        await hubContext.Clients.Users(message.SenderId, message.ReceiverId)
+            .SendAsync("MessageEdited", message.Id, message.Message);
+
+        return Ok(new { message = "Wiadomość została zedytowana." });
     }
 
     [HttpGet("me")]

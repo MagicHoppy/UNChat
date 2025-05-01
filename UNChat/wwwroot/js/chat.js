@@ -77,9 +77,6 @@ export function setupChat() {
         attachmentInput.value = null;
     }
 
-    
-
-
     sendButton.addEventListener("click", sendMessage);
 
     messageInput.addEventListener("keydown", async (event) => {
@@ -106,6 +103,7 @@ export function setupChat() {
             messageElement.remove();
         }
     });
+
    
 }
 

@@ -1,6 +1,14 @@
-﻿
+﻿import { connection } from "./connection.js";
+function updateMessageContent(wrapper, newMessage) {
+    const messageElement = wrapper.querySelector(".message");
+    messageElement.innerHTML = ""; // wyczyść stare treści
+
+    messageElement.textContent = newMessage;
+
+}
 export function addMessage(type, message, time = null, messageId = null) {
     const messagesDiv = document.getElementById("messages");
+
 
     // Create wrapper
     const wrapper = document.createElement("div");
@@ -41,6 +49,46 @@ export function addMessage(type, message, time = null, messageId = null) {
         }
 
 
+    });
+
+    // Create edit button
+    const editButton = document.createElement("button");
+    editButton.innerHTML = "✎";
+    editButton.className = "edit-button btn btn-sm btn-danger me-2"; // Margin right
+    editButton.style.padding = "0.2rem 0.5rem";
+    editButton.style.visibility = "hidden";
+    wrapper.addEventListener("mouseenter", () => {
+        editButton.style.visibility = "visible"; 
+    });
+    wrapper.addEventListener("mouseleave", () => {
+        editButton.style.visibility = "hidden";
+    });
+
+    // Handle edit button click
+    editButton.addEventListener("click", async () => {
+        if (!messageId) return;
+
+        
+        const newMessage = prompt("wpisz nowa wiadomosc", message)
+        const res = await fetch(`/api/chat/edit/${messageId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                messageId: messageId,
+                newMessage: newMessage
+            })
+        });
+
+        if (res.ok) {
+            message = newMessage; // lokalna aktualizacja referencji do starej treści
+            updateMessageContent(wrapper, newMessage);
+
+        }
+        else {
+            console.log(res);
+        }
     });
 
     // Create message bubble
@@ -97,6 +145,7 @@ export function addMessage(type, message, time = null, messageId = null) {
         wrapper.appendChild(timeSpan);
     }
     if (type === "sent") {
+        row.appendChild(editButton);
         row.appendChild(deleteButton);
     }
     row.appendChild(messageElement);
@@ -130,3 +179,11 @@ function formatMessageTime(date) {
     // Jeśli ten sam tydzień (np. ostatni czwartek, jeśli dziś jest czwartek)
     return `${dayOfWeek} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
+
+connection.on("MessageEdited", (messageId, newMessage) => {
+    const wrapper = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (wrapper) {
+        updateMessageContent(wrapper, newMessage);
+    }
+});
+
