@@ -40,7 +40,23 @@ namespace UNChat.Controllers
         [HttpGet("/api/users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _userManager.Users.Select(u => new { u.Id, u.Name }).ToListAsync();
+            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUserId = currentUser.Id;
+
+            // Get all accepted friend relationships involving the current user
+            var friendIds = await _context.Friends
+                .Where(f =>
+                    f.Status == FriendStatus.Accepted &&
+                    (f.Friend1Id == currentUserId || f.Friend2Id == currentUserId))
+                .Select(f => f.Friend1Id == currentUserId ? f.Friend2Id : f.Friend1Id)
+                .ToListAsync();
+
+            // Filter users: exclude current user and users who are already friends
+            var users = await _userManager.Users
+                .Where(u => u.Id != currentUserId && !friendIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Name })
+                .ToListAsync();
+
             return Ok(users);
         }
 
