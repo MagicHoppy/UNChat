@@ -38,6 +38,8 @@ namespace UNChat.Controllers
             model.Status = FriendStatus.Pending;
             _context.Friends.Add(model);
             await _context.SaveChangesAsync();
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendRequestReceived", model.Friend1Id);
 
             return Ok("Wysłano zaproszenie.");
         }
@@ -57,6 +59,9 @@ namespace UNChat.Controllers
             var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
             await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendAdded", model.Friend2Id);
             await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendAdded", model.Friend1Id);
+            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendRequestAccepted", model.Friend2Id);
+            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendRequestAccepted", model.Friend1Id);
+
 
             return Ok("Zaproszenie zaakceptowane.");
         }
@@ -72,6 +77,9 @@ namespace UNChat.Controllers
             _context.Friends.Remove(friendship);
 
             await _context.SaveChangesAsync();
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendRequestDenied", model.Friend2Id);
+
 
             return Ok("Zaproszenie odrzucone.");
         }

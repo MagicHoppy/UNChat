@@ -1,5 +1,6 @@
 ﻿import { loadFriends } from "./friends.js";
-
+import { connection } from "./connection.js";
+import { loadUsers } from "./user.js";
 export async function loadFriendRequests() {
     const userId = document.getElementById("userId").value;
     const response = await fetch(`/api/friends/requests/${userId}`);
@@ -54,3 +55,19 @@ export async function loadFriendRequests() {
     });
 }
 
+connection.on("FriendRequestReceived", (fromUserId) => {
+    console.log("New friend request received from:", fromUserId);
+    loadFriendRequests();
+});
+
+connection.on("FriendRequestAccepted", (otherUserId) => {
+    console.log("Friend request accepted by:", otherUserId);
+    loadFriends();
+    loadFriendRequests();
+    loadUsers();
+});
+
+connection.on("FriendRequestDenied", (otherUserId) => {
+    console.log("Friend request denied by:", otherUserId);
+    loadFriendRequests();
+});
