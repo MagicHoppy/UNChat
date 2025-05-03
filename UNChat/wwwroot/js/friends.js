@@ -1,5 +1,6 @@
 ﻿import { selectUser } from "./chat.js";
-
+import { connection } from "./connection.js";
+import { loadUsers } from "./user.js";
 export async function loadFriends() {
     const userId = document.getElementById("userId").value;
     const response = await fetch(`/api/friends/${userId}`);
@@ -131,3 +132,18 @@ function createToastContainer() {
     document.body.appendChild(container);
     return container;
 }
+connection.on("FriendRemoved", (removedFriendId) => {
+    const currentUserId = document.getElementById("userId").value;
+    if (removedFriendId) {
+        loadFriends(); // refresh the friend list
+        loadUsers();
+    }
+});
+connection.on("FriendAdded", (addedFriendId) => {
+    const currentUserId = document.getElementById("userId").value;
+    if (addedFriendId) {
+        loadFriends(); // refresh the friend list
+        loadUsers();
+
+    }
+});

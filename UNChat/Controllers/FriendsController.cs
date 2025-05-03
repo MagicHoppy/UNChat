@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using UNChat.Context;
+using Microsoft.AspNetCore.SignalR;
+using UNChat.Hubs;
 
 namespace UNChat.Controllers
 {
@@ -52,6 +54,9 @@ namespace UNChat.Controllers
 
             friendship.Status = FriendStatus.Accepted;
             await _context.SaveChangesAsync();
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendAdded", model.Friend2Id);
+            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendAdded", model.Friend1Id);
 
             return Ok("Zaproszenie zaakceptowane.");
         }
@@ -86,6 +91,9 @@ namespace UNChat.Controllers
 
             _context.Friends.Remove(friendship);
             await _context.SaveChangesAsync();
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendRemoved", model.Friend2Id);
+            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendRemoved", model.Friend1Id);
 
             return Ok("Usunięto z listy znajomych.");
         }
