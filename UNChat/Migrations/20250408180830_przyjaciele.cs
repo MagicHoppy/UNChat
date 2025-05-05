@@ -10,6 +10,7 @@ namespace UNChat.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.CreateTable(
                 name: "Friends",
                 columns: table => new
@@ -20,7 +21,7 @@ namespace UNChat.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Friends", x => new { x.Friend1Id, x.Friend2Id });
-                });
+                });*/
         }
 
         /// <inheritdoc />

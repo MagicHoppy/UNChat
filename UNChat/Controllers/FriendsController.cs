@@ -119,12 +119,22 @@ namespace UNChat.Controllers
                 .Select(f => f.Friend1Id == userId ? f.Friend2Id : f.Friend1Id)
                 .ToList();
 
+            var now = DateTime.UtcNow;
+            var onlineThreshold = TimeSpan.FromMinutes(10);
+
             var users = await _context.Users
                 .Where(u => friendIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.Name })
                 .ToListAsync();
 
-            return Ok(users);
+            var result = users.Select(u => new
+            {
+                u.Id,
+                u.Name,
+                IsOnline = u.IsOnline && u.LastOnline >= now - onlineThreshold,
+                LastOnline = u.LastOnline
+            });
+
+            return Ok(result);
         }
         [HttpGet("/api/friends/requests/{userId}")]
         public async Task<IActionResult> GetPendingRequests(string userId)

@@ -10,6 +10,7 @@ namespace UNChat.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.CreateTable(
                 name: "Emojis",
                 columns: table => new
@@ -21,7 +22,7 @@ namespace UNChat.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Emojis", x => x.Id);
-                });
+                });*/
         }
 
         /// <inheritdoc />

@@ -61,6 +61,14 @@ public class ChatApiController : ControllerBase
         }
 
         _context.ChatMessages.Add(chatMessage);
+        var user = await _context.Users.FindAsync(senderId);
+        if (user != null)
+        {
+            // Update user's online status when they send a message
+            user.IsOnline = true;
+            user.LastOnline = DateTime.UtcNow; // Update last online timestamp to now
+        }
+
         await _context.SaveChangesAsync();
 
         var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();

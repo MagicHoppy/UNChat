@@ -107,6 +107,9 @@ export function setupChat() {
    
 }
 
+setInterval(() => {
+    connection.invoke("Heartbeat").catch(err => console.error("Heartbeat error:", err));
+}, 30000); // Every 30 seconds
 
 
 

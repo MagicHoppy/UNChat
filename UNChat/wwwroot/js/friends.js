@@ -27,7 +27,36 @@ export async function loadFriends() {
         userButton.dataset.id = friend.id;
         userButton.addEventListener("click", () => selectUser(friend.id, friend.name));
 
+        const statusSpan = document.createElement("span");
+
+        if (friend.isOnline) {
+            statusSpan.innerHTML = `<span class="badge bg-success">Online</span>`;
+        } else if (friend.lastOnline) {
+            const lastSeen = new Date(friend.lastOnline);
+            const diffMs = Date.now() - lastSeen.getTime();
+            const minutes = Math.floor(diffMs / (1000 * 60));
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            let label = "";
+
+            if (diffMs < 60000) {
+                label = "przed chwilą";
+            } else if (minutes < 60) {
+                label = `${minutes} m`;
+            } else if (hours < 24) {
+                label = `${hours} h`;
+            } else {
+                label = `${days} d`;
+            }
+
+            statusSpan.innerHTML = `<span class="badge bg-secondary">${label}</span>`;
+        } else {
+            statusSpan.innerHTML = `<span class="badge bg-secondary">Offline</span>`;
+        }
+
         const badgeContainer = document.createElement("div");
+        badgeContainer.appendChild(statusSpan);
 
         const removeButton = document.createElement("button");
         removeButton.className = "btn btn-outline-danger btn-sm ms-2";

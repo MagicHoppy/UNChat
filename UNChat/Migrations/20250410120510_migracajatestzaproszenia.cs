@@ -10,12 +10,14 @@ namespace UNChat.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.AddColumn<string>(
                 name: "Status",
                 table: "Friends",
                 type: "nvarchar(max)",
                 nullable: false,
                 defaultValue: "");
+            */
         }
 
         /// <inheritdoc />

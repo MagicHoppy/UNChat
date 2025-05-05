@@ -12,3 +12,4 @@ document.addEventListener("DOMContentLoaded", () => {
     setupChat();
     setupEmojiPicker();
 });
+setInterval(loadFriends, 30000); // refresh every 30 seconds

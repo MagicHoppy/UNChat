@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -25,7 +26,15 @@ namespace UNChat.Hubs
             if (!string.IsNullOrEmpty(userId))
             {
                 _connections[userId] = Context.ConnectionId;
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user != null)
+                {
+                    user.IsOnline = true;
+                    await _context.SaveChangesAsync();
+                }
             }
+
             await base.OnConnectedAsync();
         }
 
@@ -35,12 +44,31 @@ namespace UNChat.Hubs
             if (!string.IsNullOrEmpty(userId))
             {
                 _connections.TryRemove(userId, out _);
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user != null)
+                {
+                    user.IsOnline = false;
+                    user.LastOnline = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
             }
+
             await base.OnDisconnectedAsync(exception);
         }
-
+        public async Task Heartbeat()
+        {
+            var userId = Context.UserIdentifier;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null)
+                {
+                    user.LastOnline = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
 
     }
-
 }
-
