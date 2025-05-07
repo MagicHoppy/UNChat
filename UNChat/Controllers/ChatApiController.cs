@@ -9,6 +9,7 @@ using UNChat.Context;
 using UNChat.Models;
 using UNChat.Hubs;
 using UNChat.DTOs;
+using System.Security.Claims;
 
 [Route("api/chat")]
 [ApiController]
@@ -82,11 +83,14 @@ public class ChatApiController : ControllerBase
         var message = await _context.ChatMessages
             .Include(m => m.Attachments)
             .FirstOrDefaultAsync(m => m.Id == messageId);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (message == null)
         {
             return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
         }
+        if (message.SenderId != userId)
+            return Forbid();
 
         // Delete attached files if any
         if (message.Attachments != null && message.Attachments.Count > 0)
@@ -114,8 +118,11 @@ public class ChatApiController : ControllerBase
 
 
     [HttpPut("edit/{messageId}")]
+    [Authorize]
     public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDto dto)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         if (dto == null || string.IsNullOrWhiteSpace(dto.NewMessage))
             return BadRequest("Brak nowej treści wiadomości.");
 
@@ -127,6 +134,8 @@ public class ChatApiController : ControllerBase
         {
             return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
         }
+        if (message.SenderId != userId)
+            return Forbid();
 
         message.Message = dto.NewMessage;
         //message.Timestamp = DateTime.UtcNow;

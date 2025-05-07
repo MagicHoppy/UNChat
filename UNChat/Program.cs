@@ -5,38 +5,33 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.Google;
 using UNChat.Context;
 using UNChat.Hubs;
 using UNChat.Models;
-using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
 builder.Services.AddSignalR();
 
+// Database Context
 builder.Services.AddDbContext<UNChatDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("UNChatDb")));
 
+// Identity Configuration
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<UNChatDbContext>()
     .AddDefaultTokenProviders();
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // czas blokady
-    options.Lockout.MaxFailedAccessAttempts = 3; // próby do zablokowania
-    options.Lockout.AllowedForNewUsers = true; // blokowanie nowych kont
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.AllowedForNewUsers = true;
 });
 
-builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login"; // Œcie¿ka do logowania
-    options.AccessDeniedPath = "/Account/Login"; // Œcie¿ka, gdy brak dostêpu
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Czas trwania sesji
-    options.SlidingExpiration = true; // Odnawianie ciasteczka przy aktywnoœci
-});
-
+// Authentication
 builder.Services.AddAuthentication()
     .AddGoogle(options =>
     {
@@ -45,20 +40,29 @@ builder.Services.AddAuthentication()
         options.CallbackPath = "/signin-google";
     });
 
+// Application Cookie Settings
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/Login";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.SlidingExpiration = true;
+});
 
+// MVC with Newtonsoft JSON
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
     });
 
-//builder.Services.AddAuthorization(options =>
-//{
-//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Przyk³adowa polityka
-//});
-
+// Additional Services
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var app = builder.Build();
+
+// Database Initialization
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -66,7 +70,7 @@ using (var scope = app.Services.CreateScope())
     DbInitializer.Initialize(context);
 }
 
-
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -74,21 +78,25 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
 app.UseStaticFiles();
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Hub Mapping
+app.MapHub<ChatHub>("/chatHub");
+
+// Controller Routes
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllerRoute(
     name: "account",
     pattern: "{controller=Account}/{action=Login}/{id?}");
-
 
 app.Run();
