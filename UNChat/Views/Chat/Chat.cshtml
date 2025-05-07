@@ -3,24 +3,21 @@
     ViewData["Title"] = "Czat";
 }
 
-
-
-
-<div id="chatContainer" class="d-flex vh-85">
-    <!-- Users List -->
-    <div id="userList" class="bg-light p-3 overflow-auto border-end" style="width: 300px;">
+<div id="chatContainer" class="d-flex vh-85" style="margin: 10px; padding: 0;">
+    <!-- Users List - Reduced Width -->
+    <div id="userList" class="bg-light p-2 overflow-auto border-end" style="width: 200px;">
         <h5 class="fw-bold mb-3">Użytkownicy</h5>
         <div id="users" class="d-flex flex-column gap-2"></div>
     </div>
 
-    <!-- Main Chat Area -->
-    <div id="chatBox" class="flex-grow-1 d-flex flex-column p-3">
+    <!-- Main Chat Area - Expanded Width -->
+    <div id="chatBox" class="flex-grow-1 d-flex flex-column p-2" style="width: 60%;">
         <input type="hidden" id="userId" value="@Model.UserId" />
         <h4 id="chatHeader" class="mb-3">Wybierz użytkownika</h4>
 
         <div class="mb-3 d-flex">
             <input type="text" id="searchInput" class="form-control me-2" placeholder="Szukaj wiadomości...">
-            <button id="searchButton"  class="btn btn-primary">Szukaj</button>
+            <button id="searchButton" class="btn btn-primary">Szukaj</button>
         </div>
         <ul id="searchResults" class="list-group mb-3"></ul>
         <button id="closeSearchResults" class="btn btn-sm btn-secondary mt-2 d-none">Zamknij</button>
@@ -49,28 +46,32 @@
                 <button id="sendButton" class="btn btn-primary">Wyślij</button>
             </div>
 
-            <input type="file" id="attachmentInput" class="form-control form-control-sm" />
-        </div>        <div class="d-flex align-items-center gap-2 mt-2">
-            <input type="text" id="gifSearchInput" class="form-control" placeholder="Szukaj GIF-a..." />
-            <button id="gifSearchButton" class="btn btn-outline-secondary">🔍</button>
-        </div>
+            <div class="d-flex align-items-center gap-2">
+                <button id="gifButton" class="btn btn-light">GIF</button>
+                <div id="gifSearchContainer" class="d-flex align-items-center gap-2 mt-2 d-none">
+                    <input type="text" id="gifSearchInput" class="form-control" placeholder="Szukaj GIF-a..." />
+                </div>
 
-        <div id="gifResults" class="border rounded bg-white p-2 mt-2 overflow-auto" style="max-height: 200px; display: none;"></div>
+                <input type="file" id="attachmentInput" class="form-control form-control-sm flex-grow-1" />
+            </div>
+
+
+            <div id="gifResults" class="border rounded bg-white p-2 mt-2 overflow-auto" style="max-height: 200px; display: none;"></div>
+        </div>
     </div>
 
-    <!-- Friends List -->
-    <div id="friendList" class="bg-light p-3 overflow-auto border-start" style="width: 300px;">
+    <!-- Friends List - Reduced Width -->
+    <div id="friendList" class="bg-light p-2 overflow-auto border-start" style="width: 300px;">
         <h5 class="fw-bold mb-3">Znajomi</h5>
         <ul id="friends" class="list-group"></ul>
     </div>
 
-    <!-- Friend Requests -->
-    <div id="requestsContainer" class="bg-light p-3 overflow-auto border-start" style="width: 300px;">
+    <!-- Friend Requests - Reduced Width -->
+    <div id="requestsContainer" class="bg-light p-2 overflow-auto border-start" style="width: 200px;">
         <h5 class="fw-bold mb-3">Zaproszenia</h5>
         <div id="requests" class="d-flex flex-column gap-2"></div>
     </div>
 </div>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 <script type="module" src="~/js/main.js?v=@DateTime.UtcNow.Ticks"></script>
@@ -78,4 +79,3 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-

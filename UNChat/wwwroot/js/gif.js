@@ -2,6 +2,11 @@
 import { selectedReceiverId } from './chat.js';
 
 export async function searchGifs(query) {
+    if (!query) {
+        document.getElementById("gifResults").style.display = "none";
+        return;
+    }
+
     const url = `/api/gif/search?query=${encodeURIComponent(query)}`;
 
     try {
@@ -10,6 +15,12 @@ export async function searchGifs(query) {
 
         const resultsDiv = document.getElementById("gifResults");
         resultsDiv.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+            resultsDiv.textContent = "Brak wyników";
+            resultsDiv.style.display = "block";
+            return;
+        }
 
         data.results.forEach(gif => {
             const gifUrl = gif.media_formats?.tinygif?.url || gif.media[0].gif.url;
@@ -33,6 +44,8 @@ export async function searchGifs(query) {
                 const data = await res.json();
                 addMessage("sent", data.message);
                 resultsDiv.style.display = "none";
+                document.getElementById("gifSearchContainer").style.display = "none";
+                document.getElementById("gifSearchInput").value = "";
             });
 
             resultsDiv.appendChild(img);

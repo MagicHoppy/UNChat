@@ -63,7 +63,27 @@ export function setupChat() {
         document.getElementById("closeSearchResults").classList.add("d-none");
     });
 
-    // Obsługa GIF-ów
+    // Add this to the setupChat function in chat.js
+    document.getElementById("gifButton")?.addEventListener("click", () => {
+        const gifContainer = document.getElementById("gifSearchContainer");
+        gifContainer.classList.toggle("d-none");
+    });
+
+    // Modify the GIF search functionality to use debounce
+    let gifSearchTimeout;
+    document.getElementById("gifSearchInput")?.addEventListener("input", (e) => {
+        clearTimeout(gifSearchTimeout);
+        const query = e.target.value.trim();
+        if (!query) {
+            document.getElementById("gifResults").style.display = "none";
+            return;
+        }
+
+        gifSearchTimeout = setTimeout(() => {
+            searchGifs(query);
+        }, 500); // Wait 500ms after user stops typing
+    });
+
     document.getElementById("gifSearchButton")?.addEventListener("click", () => {
         const query = document.getElementById("gifSearchInput").value.trim();
         if (query) searchGifs(query);

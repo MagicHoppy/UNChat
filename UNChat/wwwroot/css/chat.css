@@ -1,5 +1,4 @@
-﻿
-.vh-85 {
+﻿.vh-85 {
     height: 85vh;
 }
 
@@ -18,31 +17,30 @@
     font-size: 20px;
     margin: 5px;
 }
+
 #messages {
-    height: 400px;
+    height: calc(100vh - 300px);
     overflow-y: auto;
     padding: 1rem;
-    background-color: #f8f9fa; /* Bootstrap's light background */
+    background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 0.5rem;
     scroll-behavior: smooth;
 }
+
 #searchResults {
     max-height: 200px;
     overflow-y: auto;
 }
-/* Message bubbles */
+
 .message {
-    /*max-width: 95%;*/
-    background-color: #e2e3e5; /* received background */
+    background-color: #e2e3e5;
 }
 
-/* Sent message override */
 .sent {
-    background-color: #d1e7dd; /* sent background */
+    background-color: #d1e7dd;
 }
 
-/* Media */
 img, video, audio {
     border-radius: 0.5rem;
 }
@@ -50,5 +48,3 @@ img, video, audio {
 audio {
     min-height: 40px;
 }
-
-
