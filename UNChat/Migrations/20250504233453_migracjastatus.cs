@@ -10,7 +10,7 @@ namespace UNChat.Migrations
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        {/*
             migrationBuilder.AddColumn<bool>(
                 name: "IsOnline",
                 table: "AspNetUsers",
@@ -23,6 +23,7 @@ namespace UNChat.Migrations
                 table: "AspNetUsers",
                 type: "datetime2",
                 nullable: true);
+            */
         }
 
         /// <inheritdoc />

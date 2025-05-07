@@ -56,14 +56,36 @@ namespace UNChat.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null)
+            {
+                if (await _userManager.IsLockedOutAsync(user))
+                {
+                    ModelState.AddModelError("", "Konto jest zablokowane. Spróbuj ponownie później.");
+                    return View(model);
+                }
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
-                return RedirectToAction("Chat", "Chat"); // Przekierowanie na stronę czatu
+                if (user != null)
+                {
+                    await _userManager.ResetAccessFailedCountAsync(user);
+                }
+                return RedirectToAction("Chat", "Chat");
             }
 
-            ModelState.AddModelError("", "Nieprawidłowa nazwa użytkownika lub hasło");
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError("", "Konto zablokowane z powodu zbyt wielu nieudanych prób logowania. Spróbuj ponownie później.");
+            }
+            else
+            {
+                ModelState.AddModelError("", "Nieprawidłowa nazwa użytkownika lub hasło");
+            }
+
             return View(model);
         }
 
@@ -85,7 +107,6 @@ namespace UNChat.Controllers
             return Challenge(properties, provider);
         }
 
-
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = "/")
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
@@ -101,7 +122,7 @@ namespace UNChat.Controllers
             }
 
             var email = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-            
+
             if (email == null)
             {
                 return RedirectToAction("Login");
@@ -124,6 +145,5 @@ namespace UNChat.Controllers
 
             return RedirectToAction("Login");
         }
-
     }
 }

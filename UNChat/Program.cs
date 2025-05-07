@@ -19,6 +19,12 @@ builder.Services.AddDbContext<UNChatDbContext>(options =>
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<UNChatDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // czas blokady
+    options.Lockout.MaxFailedAccessAttempts = 3; // próby do zablokowania
+    options.Lockout.AllowedForNewUsers = true; // blokowanie nowych kont
+});
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
