@@ -44,6 +44,56 @@ export function setupChat() {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const attachmentInput = document.getElementById("attachmentInput");
+    document.getElementById("searchButton").addEventListener("click", () => {
+        const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+        const searchResultsList = document.getElementById("searchResults");
+        searchResultsList.innerHTML = "";
+
+        if (!keyword) return;
+
+        const allMessages = document.querySelectorAll("#messages [data-message-id]");
+        const matches = [];
+
+        allMessages.forEach(msgEl => {
+            const content = msgEl.querySelector(".message")?.innerText.toLowerCase();
+            if (content && content.includes(keyword)) {
+                matches.push(msgEl);
+            }
+        });
+
+        if (matches.length === 0) {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = "Brak pasujących wiadomości.";
+            searchResultsList.appendChild(li);
+            return;
+        }
+
+        matches.forEach((msgEl, index) => {
+            const snippet = msgEl.querySelector(".message").innerText.slice(0, 50);
+            const bubble = msgEl.querySelector(".message");
+            const timestampEl = msgEl.querySelector(".timestamp");
+            const timestamp = timestampEl ? timestampEl.innerText : "brak daty";
+            const li = document.createElement("li");
+            li.className = "list-group-item list-group-item-action";
+             li.textContent = `${snippet} (${timestamp})`;
+            li.style.cursor = "pointer";
+            li.addEventListener("click", () => {
+                // msgEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                // msgEl.classList.add("bg-warning", "rounded"); // Highlight
+               msgEl.scrollIntoView({ behavior: "smooth", block: "center" });
+               bubble.classList.add("bg-warning", "rounded");
+               setTimeout(() => bubble.classList.remove("bg-warning"), 2000);
+            });
+            searchResultsList.appendChild(li);
+        });
+        document.getElementById("closeSearchResults").classList.remove("d-none");
+
+    });
+    document.getElementById("closeSearchResults").addEventListener("click", () => {
+        document.getElementById("searchResults").innerHTML = "";
+        document.getElementById("closeSearchResults").classList.add("d-none");
+    });
 
     async function sendMessage() {
         const senderId = document.getElementById("userId").value;

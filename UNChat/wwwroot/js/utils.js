@@ -139,7 +139,7 @@ export function addMessage(type, message, time = null, messageId = null) {
 
     if (time) {
         const timeSpan = document.createElement("small");
-        timeSpan.className = "text-muted mb-1 d-block";
+        timeSpan.className = "timestamp text-muted mb-1 d-block";
         const date = new Date(time);
         timeSpan.textContent = formatMessageTime(date);
         wrapper.appendChild(timeSpan);

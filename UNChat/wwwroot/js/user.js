@@ -6,6 +6,8 @@ export async function loadUsers() {
     const userList = document.getElementById("users");
 
     userList.innerHTML = ""; // Clear old content first
+    document.getElementById("searchResults").innerHTML = "";
+    document.getElementById("searchInput").value = "";
 
     users.forEach(user => {
         const container = document.createElement("div");
