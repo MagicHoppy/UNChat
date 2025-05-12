@@ -12,6 +12,8 @@ namespace UNChat.Context
         public DbSet<Emoji> Emojis { get; set; }
         public DbSet<Friend> Friends { get; set; }
         public DbSet<ChatAttachment> ChatAttachments { get; set; }
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<UserChat> UserChats { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,6 +25,20 @@ namespace UNChat.Context
             modelBuilder.Entity<Friend>()
                 .Property(f => f.Status)
                 .HasConversion<string>(); // zapis jako string w bazie
+
+            modelBuilder.Entity<UserChat>()
+                .HasKey(uc => new { uc.UserId, uc.ChatId });
+
+            modelBuilder.Entity<UserChat>()
+                .HasOne(uc => uc.User)
+                .WithMany()
+                .HasForeignKey(uc => uc.UserId);
+
+            modelBuilder.Entity<UserChat>()
+                .HasOne(uc => uc.Chat)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(uc => uc.ChatId);
+
         }
 
 

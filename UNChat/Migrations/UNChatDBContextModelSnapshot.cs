@@ -155,6 +155,22 @@ namespace UNChat.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("UNChat.Models.Chat", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsGroup")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Chats");
+                });
+
             modelBuilder.Entity("UNChat.Models.ChatAttachment", b =>
                 {
                     b.Property<int>("Id")
@@ -189,11 +205,11 @@ namespace UNChat.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Message")
+                    b.Property<string>("ChatId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ReceiverId")
+                    b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -205,6 +221,8 @@ namespace UNChat.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChatId");
 
                     b.ToTable("ChatMessages");
                 });
@@ -318,6 +336,21 @@ namespace UNChat.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("UNChat.Models.UserChat", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ChatId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "ChatId");
+
+                    b.HasIndex("ChatId");
+
+                    b.ToTable("UserChats");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -378,6 +411,43 @@ namespace UNChat.Migrations
                         .IsRequired();
 
                     b.Navigation("ChatMessage");
+                });
+
+            modelBuilder.Entity("UNChat.Models.ChatMessage", b =>
+                {
+                    b.HasOne("UNChat.Models.Chat", "Chat")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+                });
+
+            modelBuilder.Entity("UNChat.Models.UserChat", b =>
+                {
+                    b.HasOne("UNChat.Models.Chat", "Chat")
+                        .WithMany("Participants")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNChat.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UNChat.Models.Chat", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("UNChat.Models.ChatMessage", b =>

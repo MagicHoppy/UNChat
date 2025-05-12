@@ -10,6 +10,7 @@ using UNChat.Models;
 using UNChat.Hubs;
 using UNChat.DTOs;
 using System.Security.Claims;
+using System.IO;
 
 [Route("api/chat")]
 [ApiController]
@@ -21,29 +22,28 @@ public class ChatApiController : ControllerBase
     {
         _context = context;
     }
+
     [HttpPost("send")]
-    public async Task<IActionResult> Send([FromForm] string senderId, [FromForm] string receiverId, [FromForm] string? message, [FromForm] IFormFile? file)
+    public async Task<IActionResult> Send([FromForm] string senderId, [FromForm] string chatId, [FromForm] string? message, [FromForm] IFormFile? file)
     {
-        if (string.IsNullOrEmpty(senderId) || string.IsNullOrEmpty(receiverId))
-            return BadRequest("Brakuje danych.");
-        if (string.IsNullOrEmpty(message) && file == null)
-            return BadRequest("Wiadomość lub plik jest wymagany.");
+        var chat = await _context.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.Id == chatId);
+        if (chat == null)
+            return NotFound("Chat not found.");
 
         var chatMessage = new ChatMessage
         {
             SenderId = senderId,
-            ReceiverId = receiverId,
+            ChatId = chatId,
             Message = message ?? string.Empty,
             Timestamp = DateTime.UtcNow
         };
 
-        string fileUrl = null;
+        string? fileUrl = null;
 
         if (file != null && file.Length > 0)
         {
             var uploadsFolder = Path.Combine("wwwroot", "uploads");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+            Directory.CreateDirectory(uploadsFolder);
 
             var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -62,60 +62,61 @@ public class ChatApiController : ControllerBase
         }
 
         _context.ChatMessages.Add(chatMessage);
+
         var user = await _context.Users.FindAsync(senderId);
         if (user != null)
         {
-            // Update user's online status when they send a message
             user.IsOnline = true;
-            user.LastOnline = DateTime.UtcNow; // Update last online timestamp to now
+            user.LastOnline = DateTime.UtcNow;
         }
 
         await _context.SaveChangesAsync();
 
-        var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        await hubContext.Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id);
+        var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        foreach (var participant in chat.Participants)
+        {
+            if (participant.UserId != senderId)
+            {
+                await hub.Clients.User(participant.UserId)
+                    .SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id);
+            }
+        }
 
-        return Ok(new { message, attachmentUrl = fileUrl, timestamp = chatMessage.Timestamp,id = chatMessage.Id });
+        return Ok(new { message, attachmentUrl = fileUrl, timestamp = chatMessage.Timestamp, id = chatMessage.Id });
     }
+
     [HttpDelete("remove/{messageId}")]
+    [Authorize]
     public async Task<IActionResult> RemoveMessage(int messageId)
     {
-        var message = await _context.ChatMessages
-            .Include(m => m.Attachments)
-            .FirstOrDefaultAsync(m => m.Id == messageId);
+        var message = await _context.ChatMessages.Include(m => m.Attachments).FirstOrDefaultAsync(m => m.Id == messageId);
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (message == null)
-        {
-            return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
-        }
+            return NotFound("Wiadomość nie została znaleziona.");
+
         if (message.SenderId != userId)
             return Forbid();
 
-        // Delete attached files if any
-        if (message.Attachments != null && message.Attachments.Count > 0)
+        if (message.Attachments != null)
         {
             foreach (var attachment in message.Attachments)
             {
                 var filePath = Path.Combine("wwwroot", attachment.FilePath.TrimStart('/'));
                 if (System.IO.File.Exists(filePath))
-                {
                     System.IO.File.Delete(filePath);
-                }
             }
         }
 
         _context.ChatMessages.Remove(message);
         await _context.SaveChangesAsync();
 
-        // Notify clients via SignalR
-        var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        await hubContext.Clients.Users(message.SenderId, message.ReceiverId)
-            .SendAsync("MessageRemoved", messageId);
+        var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        // Można wysłać powiadomienie do uczestników czatu, jeśli chcesz:
+        // await hub.Clients.Group(message.ChatId).SendAsync("MessageRemoved", message.Id);
 
         return Ok(new { message = "Wiadomość została usunięta." });
     }
-
 
     [HttpPut("edit/{messageId}")]
     [Authorize]
@@ -126,27 +127,20 @@ public class ChatApiController : ControllerBase
         if (dto == null || string.IsNullOrWhiteSpace(dto.NewMessage))
             return BadRequest("Brak nowej treści wiadomości.");
 
-        var message = await _context.ChatMessages
-            .Include(m => m.Attachments)
-            .FirstOrDefaultAsync(m => m.Id == messageId);
+        var message = await _context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId);
 
         if (message == null)
-        {
-            return NotFound("Wiadomość nie została znaleziona."); // "Message not found."
-        }
+            return NotFound("Wiadomość nie została znaleziona.");
+
         if (message.SenderId != userId)
             return Forbid();
 
         message.Message = dto.NewMessage;
-        //message.Timestamp = DateTime.UtcNow;
-
-        _context.ChatMessages.Update(message);
         await _context.SaveChangesAsync();
 
-        // Notify clients via SignalR
-        var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        await hubContext.Clients.Users(message.SenderId, message.ReceiverId)
-            .SendAsync("MessageEdited", message.Id, message.Message);
+        var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        // Można powiadomić innych użytkowników czatu:
+        // await hub.Clients.Group(message.ChatId).SendAsync("MessageEdited", message.Id, message.Message);
 
         return Ok(new { message = "Wiadomość została zedytowana." });
     }
@@ -155,38 +149,70 @@ public class ChatApiController : ControllerBase
     [Authorize]
     public IActionResult GetCurrentUserId()
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
-        {
             return Unauthorized("User not logged in.");
-        }
+
         return Ok(new { userId });
     }
 
-    [HttpGet("messages/{userId}/{contactId}")]
-    public async Task<IActionResult> GetMessages(string userId, string contactId)
+    [HttpGet("messages/{chatId}")]
+    [Authorize]
+    public async Task<IActionResult> GetMessages(string chatId)
     {
-        var messages = await _context.ChatMessages
-            .Where(m => (m.SenderId == userId && m.ReceiverId == contactId) ||
-                        (m.SenderId == contactId && m.ReceiverId == userId))
-            .Include(m => m.Attachments)
-            .OrderBy(m => m.Timestamp)
-            .ToListAsync();
-
-        var messageDtos = messages.Select(m => new ChatMessageDto
+        try
         {
-            Id = m.Id,
-            SenderId = m.SenderId,
-            Message = m.Message,
-            Timestamp = m.Timestamp,
-            Attachments = m.Attachments.Select(a => new ChatAttachmentDto
-            {
-                FileName = a.FileName,
-                FilePath = a.FilePath
-            }).ToList()
-        }).ToList();
+            var messages = await _context.ChatMessages
+                .Where(m => m.ChatId == chatId)
+                .Include(m => m.Attachments)
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
 
-        return Ok(messageDtos);
+            var messageDtos = messages.Select(m => new ChatMessageDto
+            {
+                Id = m.Id,
+                SenderId = m.SenderId,
+                Message = m.Message,
+                Timestamp = m.Timestamp,
+                Attachments = m.Attachments?.Select(a => new ChatAttachmentDto
+                {
+                    FileName = a.FileName,
+                    FilePath = a.FilePath
+                }).ToList() ?? new List<ChatAttachmentDto>()
+            }).ToList();
+
+            return Ok(messageDtos);
+        }
+        catch (Exception ex)
+        {
+            // Zaloguj błąd
+            Console.WriteLine($"Błąd w GetMessages: {ex.Message}");
+            return StatusCode(500, "Wystąpił błąd podczas pobierania wiadomości.");
+        }
+    }
+
+    [HttpPost("create-group")]
+    public async Task<IActionResult> CreateGroupChat([FromBody] GroupChatDto dto)
+    {
+        var chat = new Chat
+        {
+            Name = dto.Name,
+            IsGroup = true
+        };
+
+        _context.Chats.Add(chat);
+        await _context.SaveChangesAsync();
+
+        var participants = dto.UserIds.Distinct().Select(id => new UserChat
+        {
+            UserId = id,
+            ChatId = chat.Id
+        });
+
+        _context.UserChats.AddRange(participants);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { chatId = chat.Id });
     }
 
 }

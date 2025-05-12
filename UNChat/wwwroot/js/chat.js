@@ -2,29 +2,24 @@
 import { connection } from "./connection.js";
 import { searchGifs } from "./gif.js";
 
-export let selectedReceiverId = null;
+export let selectedChatId = null;
 
-export async function selectUser(userId, userName) {
-    selectedReceiverId = userId;
+export async function selectUser(chatId, userName) {
+    selectedChatId = chatId;
     document.getElementById("chatHeader").textContent = `Czat z ${userName}`;
 
     document.querySelectorAll("#friends .user-btn").forEach(btn => btn.classList.remove("active"));
-
-    const selectedButton = document.querySelector(`#friends .user-btn[data-id='${userId}']`);
-    if (selectedButton) {
-        selectedButton.classList.add("active");
-    }
+    const selectedButton = document.querySelector(`#friends .user-btn[data-chat-id='${chatId}']`);
+    if (selectedButton) selectedButton.classList.add("active");
 
     document.getElementById("messages").innerHTML = "";
 
     try {
-        const senderId = document.getElementById("userId").value;
-        if (!senderId) throw new Error("Brak ID użytkownika");
-
-        const response = await fetch(`/api/chat/messages/${senderId}/${userId}`);
+        const response = await fetch(`/api/chat/messages/${chatId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const messages = await response.json();
+        const senderId = document.getElementById("userId").value;
 
         messages.forEach(msg => {
             const type = msg.senderId === senderId ? "sent" : "received";
@@ -33,7 +28,7 @@ export async function selectUser(userId, userName) {
                 addMessage(type, msg.message, msg.timestamp, msg.id);
             }
 
-            if (msg.attachments && msg.attachments.length > 0) {
+            if (msg.attachments?.length > 0) {
                 msg.attachments.forEach(att => {
                     if (att.filePath) {
                         addMessage(type, att.filePath, msg.timestamp, msg.id);
@@ -56,20 +51,17 @@ export function setupChat() {
         return;
     }
 
-    // Obsługa wyszukiwania wiadomości
     document.getElementById("searchButton")?.addEventListener("click", handleSearch);
     document.getElementById("closeSearchResults")?.addEventListener("click", () => {
         document.getElementById("searchResults").innerHTML = "";
         document.getElementById("closeSearchResults").classList.add("d-none");
     });
 
-    // Add this to the setupChat function in chat.js
     document.getElementById("gifButton")?.addEventListener("click", () => {
         const gifContainer = document.getElementById("gifSearchContainer");
         gifContainer.classList.toggle("d-none");
     });
 
-    // Modify the GIF search functionality to use debounce
     let gifSearchTimeout;
     document.getElementById("gifSearchInput")?.addEventListener("input", (e) => {
         clearTimeout(gifSearchTimeout);
@@ -78,10 +70,7 @@ export function setupChat() {
             document.getElementById("gifResults").style.display = "none";
             return;
         }
-
-        gifSearchTimeout = setTimeout(() => {
-            searchGifs(query);
-        }, 500); // Wait 500ms after user stops typing
+        gifSearchTimeout = setTimeout(() => searchGifs(query), 500);
     });
 
     document.getElementById("gifSearchButton")?.addEventListener("click", () => {
@@ -89,7 +78,6 @@ export function setupChat() {
         if (query) searchGifs(query);
     });
 
-    // Nasłuchiwanie zdarzeń
     sendButton.addEventListener("click", sendMessage);
     messageInput.addEventListener("keydown", async (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -98,32 +86,23 @@ export function setupChat() {
         }
     });
 
-    // Połączenie SignalR
     connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp, id) => {
-        if (senderId !== selectedReceiverId) return;
+        const currentUserId = document.getElementById("userId").value;
+        if (!currentUserId || senderId === currentUserId) return;
 
-        if (message) {
-            addMessage("received", message, timestamp, id);
-        }
-
-        if (attachmentUrl) {
-            addMessage("received", attachmentUrl, timestamp, id);
-        }
+        if (message) addMessage("received", message, timestamp, id);
+        if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id);
     });
 
     connection.on("MessageRemoved", (messageId) => {
         const messageElement = document.querySelector(`[data-message-id='${messageId}']`);
-        if (messageElement) {
-            messageElement.remove();
-        }
+        if (messageElement) messageElement.remove();
     });
 
-    // Heartbeat
     const heartbeatInterval = setInterval(() => {
         connection.invoke("Heartbeat").catch(err => console.error("Heartbeat error:", err));
     }, 30000);
 
-    // Funkcja czyszczenia przy zamykaniu
     return () => {
         clearInterval(heartbeatInterval);
         connection.off("ReceiveMessage");
@@ -136,8 +115,8 @@ async function sendMessage() {
     const messageInput = document.getElementById("messageInput");
     const attachmentInput = document.getElementById("attachmentInput");
 
-    if (!senderId || !selectedReceiverId) {
-        alert("Nie wybrano odbiorcy lub brak ID użytkownika!");
+    if (!senderId || !selectedChatId) {
+        alert("Nie wybrano czatu lub brak ID użytkownika!");
         return;
     }
 
@@ -151,7 +130,7 @@ async function sendMessage() {
 
     const formData = new FormData();
     formData.append("senderId", senderId);
-    formData.append("receiverId", selectedReceiverId);
+    formData.append("chatId", selectedChatId);
     formData.append("message", message);
     if (file) formData.append("file", file);
 
@@ -181,9 +160,7 @@ function handleSearch() {
     const searchResultsList = document.getElementById("searchResults");
 
     if (!searchResultsList) return;
-
     searchResultsList.innerHTML = "";
-
     if (!keyword) return;
 
     const allMessages = document.querySelectorAll("#messages [data-message-id]");
@@ -191,9 +168,7 @@ function handleSearch() {
 
     allMessages.forEach(msgEl => {
         const content = msgEl.querySelector(".message")?.textContent?.toLowerCase();
-        if (content && content.includes(keyword)) {
-            matches.push(msgEl);
-        }
+        if (content && content.includes(keyword)) matches.push(msgEl);
     });
 
     if (matches.length === 0) {

@@ -1,5 +1,5 @@
 ﻿import { addMessage } from "./utils.js";
-import { selectedReceiverId } from './chat.js';
+import { selectedChatId } from './chat.js';
 
 export async function searchGifs(query) {
     if (!query) {
@@ -32,10 +32,10 @@ export async function searchGifs(query) {
 
             img.addEventListener("click", async () => {
                 const senderId = document.getElementById("userId").value;
-                if (!selectedReceiverId) return;
+                if (!selectedChatId) return;
                 const formData = new FormData();
                 formData.append("senderId", senderId);
-                formData.append("receiverId", selectedReceiverId);
+                formData.append("receiverId", selectedChatId);
                 formData.append("message", gifUrl);
                 const res = await fetch("/api/chat/send", {
                     method: "POST",

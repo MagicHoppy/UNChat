@@ -61,6 +61,20 @@ namespace UNChat.Controllers
             await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendAdded", model.Friend1Id);
             await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendRequestAccepted", model.Friend2Id);
             await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendRequestAccepted", model.Friend1Id);
+            var chat = new Chat
+            {
+                IsGroup = false
+            };
+
+            _context.Chats.Add(chat);
+            await _context.SaveChangesAsync();
+
+            _context.UserChats.AddRange(new[]
+            {
+                new UserChat { UserId = model.Friend1Id, ChatId = chat.Id },
+                new UserChat { UserId = model.Friend2Id, ChatId = chat.Id }
+            });
+            await _context.SaveChangesAsync();
 
 
             return Ok("Zaproszenie zaakceptowane.");
