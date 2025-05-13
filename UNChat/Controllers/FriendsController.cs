@@ -67,6 +67,7 @@ namespace UNChat.Controllers
             };
 
             _context.Chats.Add(chat);
+            Console.WriteLine(chat.ToString());
             await _context.SaveChangesAsync();
 
             _context.UserChats.AddRange(new[]
@@ -140,12 +141,22 @@ namespace UNChat.Controllers
                 .Where(u => friendIds.Contains(u.Id))
                 .ToListAsync();
 
-            var result = users.Select(u => new
+            var result = users.Select(u =>
             {
-                u.Id,
-                u.Name,
-                IsOnline = u.IsOnline && u.LastOnline >= now - onlineThreshold,
-                LastOnline = u.LastOnline
+                // Find the chatId associated with each friend
+                var chat = _context.UserChats
+                    .Where(uc => uc.UserId == u.Id && uc.Chat.IsGroup == false) // Non-group chats (one-on-one chats)
+                    .Select(uc => uc.ChatId)
+                    .FirstOrDefault();
+
+                return new
+                {
+                    u.Id,
+                    u.Name,
+                    IsOnline = u.IsOnline && u.LastOnline >= now - onlineThreshold,
+                    LastOnline = u.LastOnline,
+                    ChatId = chat // Include the ChatId
+                };
             });
 
             return Ok(result);

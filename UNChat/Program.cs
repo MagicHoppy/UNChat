@@ -97,7 +97,7 @@ app.UseAuthorization();
 
 // Hub Mapping
 app.MapHub<ChatHub>("/chatHub");
-
+app.MapControllers();
 // Controller Routes
 app.MapControllerRoute(
     name: "default",

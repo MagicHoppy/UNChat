@@ -35,7 +35,7 @@ export async function searchGifs(query) {
                 if (!selectedChatId) return;
                 const formData = new FormData();
                 formData.append("senderId", senderId);
-                formData.append("receiverId", selectedChatId);
+                formData.append("chatId", selectedChatId);
                 formData.append("message", gifUrl);
                 const res = await fetch("/api/chat/send", {
                     method: "POST",

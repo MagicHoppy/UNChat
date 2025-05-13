@@ -96,6 +96,7 @@ export function setupChat() {
 
     connection.on("MessageRemoved", (messageId) => {
         const messageElement = document.querySelector(`[data-message-id='${messageId}']`);
+        console.log("HALO USUN!");
         if (messageElement) messageElement.remove();
     });
 
@@ -116,6 +117,8 @@ async function sendMessage() {
     const attachmentInput = document.getElementById("attachmentInput");
 
     if (!senderId || !selectedChatId) {
+        console.log(senderId);
+        console.log(selectedChatId);
         alert("Nie wybrano czatu lub brak ID użytkownika!");
         return;
     }

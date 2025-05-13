@@ -27,9 +27,16 @@ public class ChatApiController : ControllerBase
     public async Task<IActionResult> Send([FromForm] string senderId, [FromForm] string chatId, [FromForm] string? message, [FromForm] IFormFile? file)
     {
         var chat = await _context.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.Id == chatId);
-        if (chat == null)
-            return NotFound("Chat not found.");
+        var allChats = await _context.Chats.Select(c => c.Id).ToListAsync();
+        Console.WriteLine("Available chat IDs in DB:");
+        foreach (var id in allChats)
+            Console.WriteLine($"'{id}'");
 
+        if (chat == null)
+        {
+    Console.WriteLine($"Sender: {senderId}, ChatId: {chatId}, Message: {message}, File: {file?.FileName}");
+            return NotFound("Chat not found.");
+        }
         var chatMessage = new ChatMessage
         {
             SenderId = senderId,
@@ -91,6 +98,7 @@ public class ChatApiController : ControllerBase
     {
         var message = await _context.ChatMessages.Include(m => m.Attachments).FirstOrDefaultAsync(m => m.Id == messageId);
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var chat = await _context.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.Id == message.ChatId);
 
         if (message == null)
             return NotFound("Wiadomość nie została znaleziona.");
@@ -112,9 +120,18 @@ public class ChatApiController : ControllerBase
         await _context.SaveChangesAsync();
 
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        // Można wysłać powiadomienie do uczestników czatu, jeśli chcesz:
-        // await hub.Clients.Group(message.ChatId).SendAsync("MessageRemoved", message.Id);
 
+        if(chat != null)
+        { 
+        foreach (var participant in chat.Participants)
+        {
+            if (participant.UserId != userId)
+            {
+                await hub.Clients.User(participant.UserId)
+                    .SendAsync("MessageRemoved", messageId);
+            }
+        }
+     }
         return Ok(new { message = "Wiadomość została usunięta." });
     }
 
@@ -123,11 +140,13 @@ public class ChatApiController : ControllerBase
     public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDto dto)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var message = await _context.ChatMessages.Include(m => m.Attachments).FirstOrDefaultAsync(m => m.Id == messageId);
+        var chat = await _context.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.Id == message.ChatId);
 
         if (dto == null || string.IsNullOrWhiteSpace(dto.NewMessage))
             return BadRequest("Brak nowej treści wiadomości.");
 
-        var message = await _context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId);
+        //var message = await _context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId);
 
         if (message == null)
             return NotFound("Wiadomość nie została znaleziona.");
@@ -140,8 +159,18 @@ public class ChatApiController : ControllerBase
 
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
         // Można powiadomić innych użytkowników czatu:
-        // await hub.Clients.Group(message.ChatId).SendAsync("MessageEdited", message.Id, message.Message);
-
+        //await hub.Clients.Group(message.ChatId).SendAsync("MessageEdited", message.Id, message.Message);
+        if (chat != null)
+        {
+            foreach (var participant in chat.Participants)
+            {
+                if (participant.UserId != userId)
+                {
+                    await hub.Clients.User(participant.UserId)
+                        .SendAsync("MessageEdited", messageId, message.Message);
+                }
+            }
+        }
         return Ok(new { message = "Wiadomość została zedytowana." });
     }
 
@@ -180,7 +209,6 @@ public class ChatApiController : ControllerBase
                     FilePath = a.FilePath
                 }).ToList() ?? new List<ChatAttachmentDto>()
             }).ToList();
-
             return Ok(messageDtos);
         }
         catch (Exception ex)

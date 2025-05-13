@@ -18,6 +18,10 @@ namespace UNChat.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Chat>()
+                .Property(c => c.Id)
+                .ValueGeneratedOnAdd(); // Tells EF Core to generate it automatically when a new Chat is added
+
 
             modelBuilder.Entity<Friend>()
                 .HasKey(f => new { f.Friend1Id, f.Friend2Id });

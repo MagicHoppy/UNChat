@@ -25,7 +25,8 @@ export async function loadFriends() {
         userButton.className = "btn btn-link text-start flex-grow-1";
         userButton.textContent = friend.name;
         userButton.dataset.id = friend.id;
-        userButton.addEventListener("click", () => selectUser(friend.id, friend.name));
+        console.log(friend);
+        userButton.addEventListener("click", () => selectUser(friend.chatId, friend.name));
 
         const statusSpan = document.createElement("span");
 
