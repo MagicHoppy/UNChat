@@ -12,8 +12,8 @@ using UNChat.Context;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDbContext))]
-    [Migration("20250512201617_migracjaaa")]
-    partial class migracjaaa
+    [Migration("20250513220612_testtt")]
+    partial class testtt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -161,6 +161,7 @@ namespace UNChat.Migrations
             modelBuilder.Entity("UNChat.Models.Chat", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("IsGroup")
@@ -346,6 +347,9 @@ namespace UNChat.Migrations
 
                     b.Property<string>("ChatId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
 
                     b.HasKey("UserId", "ChatId");
 

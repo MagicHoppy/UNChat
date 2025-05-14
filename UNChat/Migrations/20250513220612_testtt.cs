@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class migracjaaa : Migration
+    public partial class testtt : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -225,7 +225,8 @@ namespace UNChat.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ChatId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    ChatId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IsAdmin = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

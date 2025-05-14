@@ -86,10 +86,10 @@ export function setupChat() {
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp, id) => {
+    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp, id, chatId) => {
         const currentUserId = document.getElementById("userId").value;
         if (!currentUserId || senderId === currentUserId) return;
-
+        if (chatId != selectedChatId) return;
         if (message) addMessage("received", message, timestamp, id);
         if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id);
     });

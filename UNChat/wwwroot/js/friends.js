@@ -1,11 +1,22 @@
 ﻿import { selectUser } from "./chat.js";
 import { connection } from "./connection.js";
 import { loadUsers } from "./user.js";
+
+let groupSelectionMode = false;
+let selectedUserIds = [];
+
+export function enableGroupSelectionMode() {
+    groupSelectionMode = true;
+    selectedUserIds = [];
+    loadFriends(); // reload to show checkboxes
+}
+
 export async function loadFriends() {
     const userId = document.getElementById("userId").value;
     const response = await fetch(`/api/friends/${userId}`);
     const friends = await response.json();
     const friendsList = document.getElementById("friends");
+            
     friendsList.innerHTML = "";
 
     if (friends.length === 0) {
@@ -20,13 +31,29 @@ export async function loadFriends() {
     friends.forEach(friend => {
         const listItem = document.createElement("li");
         listItem.className = "list-group-item d-flex justify-content-between align-items-center";
-
         const userButton = document.createElement("button");
         userButton.className = "btn btn-link text-start flex-grow-1";
         userButton.textContent = friend.name;
-        userButton.dataset.id = friend.id;
-        console.log(friend);
-        userButton.addEventListener("click", () => selectUser(friend.chatId, friend.name));
+        userButton.dataset.id = friend.chatId;
+        console.log(friend.chatId);
+
+        if (groupSelectionMode) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "form-check-input me-2";
+            checkbox.addEventListener("change", () => {
+                if (checkbox.checked) {
+                    selectedUserIds.push(friend.id);
+                } else {
+                    selectedUserIds = selectedUserIds.filter(id => id !== friend.id);
+                }
+            });
+
+            listItem.prepend(checkbox);
+        } else {
+            userButton.addEventListener("click", () => selectUser(friend.chatId, friend.name));
+        }
+
 
         const statusSpan = document.createElement("span");
 
@@ -76,6 +103,56 @@ export async function loadFriends() {
         friendsList.appendChild(listItem);
     });
 }
+
+document.getElementById("startGroupChatBtn").addEventListener("click", () => {
+    enableGroupSelectionMode();
+    document.getElementById("groupChatForm").classList.remove("d-none");
+});
+
+document.getElementById("cancelGroupBtn").addEventListener("click", () => {
+    groupSelectionMode = false;
+    selectedUserIds = [];
+    document.getElementById("groupChatForm").classList.add("d-none");
+    loadFriends();
+});
+
+document.getElementById("createGroupBtn").addEventListener("click", async () => {
+    const groupName = document.getElementById("groupChatName").value.trim();
+    const creatorId = document.getElementById("userId").value;
+
+    if (!groupName || selectedUserIds.length < 2) {
+        showToast("Błąd", "Wybierz co najmniej 2 znajomych i wpisz nazwę grupy.", "warning");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/chat/create-group", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: groupName,
+                userIds: selectedUserIds,
+                creatorId: creatorId
+            })
+        });
+
+        if (res.ok) {
+            showToast("Sukces", "Utworzono czat grupowy!", "success");
+            groupSelectionMode = false;
+            selectedUserIds = [];
+            document.getElementById("groupChatForm").classList.add("d-none");
+            document.getElementById("groupChatName").value = "";
+            loadFriends();
+            loadGroupChats();
+        } else {
+            showToast("Błąd", await res.text(), "danger");
+        }
+    } catch (err) {
+        console.error("Błąd tworzenia grupy:", err);
+        showToast("Błąd", "Nie udało się utworzyć grupy", "danger");
+    }
+});
+
 
 export async function addFriend(friendId) {
     const currentUserId = document.getElementById("userId").value;
@@ -177,3 +254,70 @@ connection.on("FriendAdded", (addedFriendId) => {
 
     }
 });
+
+export async function loadGroupChats() {
+    const userId = document.getElementById("userId").value;
+    const response = await fetch("/api/chat/groups");
+    const groupChats = await response.json();
+    const groupChatsList = document.getElementById("groupChats");
+
+    groupChatsList.innerHTML = "";
+
+    if (groupChats.length === 0) {
+        groupChatsList.innerHTML = `<div class="alert alert-info">Brak czatów grupowych.</div>`;
+        return;
+    }
+
+    groupChats.forEach(chat => {
+        const listItem = document.createElement("li");
+        listItem.className = "list-group-item d-flex justify-content-between align-items-center flex-wrap";
+
+        const button = document.createElement("button");
+        button.className = "btn btn-link text-start flex-grow-1";
+        button.textContent = chat.chatName || "Grupa bez nazwy";
+        button.addEventListener("click", () => selectUser(chat.chatId, chat.chatName));
+
+        const buttonGroup = document.createElement("div");
+        buttonGroup.className = "d-flex gap-2";
+
+        const leaveBtn = document.createElement("button");
+        leaveBtn.className = "btn btn-outline-warning btn-sm";
+        leaveBtn.innerHTML = '<i class="bi bi-box-arrow-right"></i> Opuść';
+        leaveBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (confirm(`Czy na pewno chcesz opuścić grupę "${chat.chatName}"?`)) {
+                const res = await fetch(`/api/chat/leave-group/${chat.chatId}`, { method: "POST" });
+                if (res.ok) {
+                    showToast("Grupa", "Opuściłeś czat grupowy.", "success");
+                    loadGroupChats();
+                } else {
+                    showToast("Błąd", await res.text(), "danger");
+                }
+            }
+        });
+        buttonGroup.appendChild(leaveBtn);
+
+        if (chat.isAdmin) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn btn-outline-danger btn-sm";
+            deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Usuń';
+            deleteBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (confirm(`Czy na pewno chcesz usunąć grupę "${chat.chatName}"?`)) {
+                    const res = await fetch(`/api/chat/delete-group/${chat.chatId}`, { method: "DELETE" });
+                    if (res.ok) {
+                        showToast("Grupa", "Czat grupowy został usunięty.", "success");
+                        loadGroupChats();
+                    } else {
+                        showToast("Błąd", await res.text(), "danger");
+                    }
+                }
+            });
+            buttonGroup.appendChild(deleteBtn);
+        }
+
+        listItem.appendChild(button);
+        listItem.appendChild(buttonGroup);
+        groupChatsList.appendChild(listItem);
+    });
+}

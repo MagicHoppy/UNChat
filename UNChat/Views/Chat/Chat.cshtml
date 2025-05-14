@@ -64,6 +64,25 @@
     <div id="friendList" class="bg-light p-2 overflow-auto border-start" style="width: 300px;">
         <h5 class="fw-bold mb-3">Znajomi</h5>
         <ul id="friends" class="list-group"></ul>
+        <button id="startGroupChatBtn" class="btn btn-primary my-2">
+            <i class="bi bi-people-fill"></i> Stwórz czat grupowy
+        </button>
+        <ul id="friends" class="list-group"></ul>
+
+
+
+        <div id="groupChatForm" class="card p-3 mt-3 d-none">
+            <div class="mb-2">
+                <label for="groupChatName" class="form-label">Nazwa grupy</label>
+                <input type="text" id="groupChatName" class="form-control" placeholder="Wpisz nazwę grupy">
+            </div>
+            <button id="createGroupBtn" class="btn btn-success">Utwórz grupę</button>
+            <button id="cancelGroupBtn" class="btn btn-secondary ms-2">Anuluj</button>
+        </div>
+
+        <h5 class="mt-4">Czaty grupowe</h5>
+        <ul id="groupChats" class="list-group"></ul>
+
     </div>
 
     <!-- Friend Requests - Reduced Width -->

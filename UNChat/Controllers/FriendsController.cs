@@ -54,27 +54,33 @@ namespace UNChat.Controllers
             if (friendship == null)
                 return NotFound("Zaproszenie nie istnieje.");
 
+            // Sprawdź czy czat już istnieje
+            var existingChat = await _context.UserChats
+                .Where(uc => uc.UserId == model.Friend1Id || uc.UserId == model.Friend2Id)
+                .GroupBy(uc => uc.ChatId)
+                .Where(g => g.Count() == 2)
+                .Select(g => g.Key)
+                .FirstOrDefaultAsync();
+
+            if (existingChat == null)
+            {
+                // Tworzymy nowy czat tylko jeśli nie istnieje
+                var chat = new Chat
+                {
+                    IsGroup = false
+                };
+
+                _context.Chats.Add(chat);
+                await _context.SaveChangesAsync();
+
+                _context.UserChats.AddRange(new[]
+                {
+            new UserChat { UserId = model.Friend1Id, ChatId = chat.Id },
+            new UserChat { UserId = model.Friend2Id, ChatId = chat.Id }
+        });
+            }
+
             friendship.Status = FriendStatus.Accepted;
-            await _context.SaveChangesAsync();
-            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendAdded", model.Friend2Id);
-            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendAdded", model.Friend1Id);
-            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendRequestAccepted", model.Friend2Id);
-            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendRequestAccepted", model.Friend1Id);
-            var chat = new Chat
-            {
-                IsGroup = false
-            };
-
-            _context.Chats.Add(chat);
-            Console.WriteLine(chat.ToString());
-            await _context.SaveChangesAsync();
-
-            _context.UserChats.AddRange(new[]
-            {
-                new UserChat { UserId = model.Friend1Id, ChatId = chat.Id },
-                new UserChat { UserId = model.Friend2Id, ChatId = chat.Id }
-            });
             await _context.SaveChangesAsync();
 
 
@@ -126,6 +132,7 @@ namespace UNChat.Controllers
         [HttpGet("/api/friends/{userId}")]
         public async Task<IActionResult> GetFriends(string userId)
         {
+            // Krok 1: Pobierz przyjaciół
             var friends = await _context.Friends
                 .Where(f => (f.Friend1Id == userId || f.Friend2Id == userId) && f.Status == FriendStatus.Accepted)
                 .ToListAsync();
@@ -137,30 +144,44 @@ namespace UNChat.Controllers
             var now = DateTime.UtcNow;
             var onlineThreshold = TimeSpan.FromMinutes(10);
 
+            // Krok 2: Pobierz dane użytkowników
             var users = await _context.Users
                 .Where(u => friendIds.Contains(u.Id))
                 .ToListAsync();
 
-            var result = users.Select(u =>
+            // Krok 3: Pobierz wszystkie czaty użytkownika (userId), które nie są grupowe
+            var privateChats = await _context.UserChats
+                .Include(uc => uc.Chat)
+                    .ThenInclude(c => c.Participants)
+                .Where(uc => uc.UserId == userId && uc.Chat.IsGroup == false)
+                .Select(uc => new
+                {
+                    uc.ChatId,
+                    Chat = uc.Chat
+                })
+                .ToListAsync();
+
+            // Krok 4: Zbuduj wynik
+            var result = users.Select(friend =>
             {
-                // Find the chatId associated with each friend
-                var chat = _context.UserChats
-                    .Where(uc => uc.UserId == u.Id && uc.Chat.IsGroup == false) // Non-group chats (one-on-one chats)
-                    .Select(uc => uc.ChatId)
-                    .FirstOrDefault();
+                // Znajdź czat 1-na-1 pomiędzy userId i friend.Id
+                var chatId = privateChats
+                    .FirstOrDefault(pc => pc.Chat.Participants.Any(p => p.UserId == friend.Id))
+                    ?.ChatId;
 
                 return new
                 {
-                    u.Id,
-                    u.Name,
-                    IsOnline = u.IsOnline && u.LastOnline >= now - onlineThreshold,
-                    LastOnline = u.LastOnline,
-                    ChatId = chat // Include the ChatId
+                    friend.Id,
+                    friend.Name,
+                    IsOnline = friend.IsOnline && friend.LastOnline >= now - onlineThreshold,
+                    LastOnline = friend.LastOnline,
+                    ChatId = chatId
                 };
             });
 
             return Ok(result);
         }
+
         [HttpGet("/api/friends/requests/{userId}")]
         public async Task<IActionResult> GetPendingRequests(string userId)
         {

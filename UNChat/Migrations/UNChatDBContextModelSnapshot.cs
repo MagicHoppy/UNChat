@@ -158,6 +158,7 @@ namespace UNChat.Migrations
             modelBuilder.Entity("UNChat.Models.Chat", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("IsGroup")
@@ -343,6 +344,9 @@ namespace UNChat.Migrations
 
                     b.Property<string>("ChatId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
 
                     b.HasKey("UserId", "ChatId");
 
