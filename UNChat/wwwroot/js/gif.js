@@ -42,7 +42,8 @@ export async function searchGifs(query) {
                     body: formData
                 });
                 const data = await res.json();
-                addMessage("sent", data.message);
+                //addMessage("sent", data.message);
+                if (data.message) addMessage("sent", data.message, data.timestamp, data.id);
                 resultsDiv.style.display = "none";
                 document.getElementById("gifSearchContainer").style.display = "none";
                 document.getElementById("gifSearchInput").value = "";
