@@ -15,10 +15,13 @@
         <input type="hidden" id="userId" value="@Model.UserId" />
         <h4 id="chatHeader" class="mb-3">Wybierz użytkownika</h4>
 
-        <div class="mb-3 d-flex">
-            <input type="text" id="searchInput" class="form-control me-2" placeholder="Szukaj wiadomości...">
+        <div class="mb-3 d-flex gap-2">
+            <input type="text" id="searchInput" class="form-control" placeholder="Szukaj wiadomości...">
             <button id="searchButton" class="btn btn-primary">Szukaj</button>
+            <button id="pinnedButton" class="btn btn-warning">📌 Przypięte</button>
         </div>
+        <ul id="pinnedMessages" class="list-group mb-3 d-none"></ul>
+
         <ul id="searchResults" class="list-group mb-3"></ul>
         <button id="closeSearchResults" class="btn btn-sm btn-secondary mt-2 d-none">Zamknij</button>
 

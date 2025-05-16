@@ -242,7 +242,74 @@ public class ChatApiController : ControllerBase
         }
     }
 
-    
+
+    [HttpPost("pin/{messageId}")]
+    [Authorize]
+    public async Task<IActionResult> TogglePinMessage(int messageId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var message = await _context.ChatMessages.Include(m => m.Chat).ThenInclude(c => c.Participants)
+                                                 .FirstOrDefaultAsync(m => m.Id == messageId);
+
+        if (message == null)
+            return NotFound("Wiadomość nie została znaleziona.");
+
+        var chat = message.Chat;
+
+        // Sprawdź, czy użytkownik jest uczestnikiem czatu
+        if (!chat.Participants.Any(p => p.UserId == userId))
+            return Forbid("Nie jesteś uczestnikiem tego czatu.");
+
+        message.IsPinned = !message.IsPinned;
+        await _context.SaveChangesAsync();
+
+        var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+
+        foreach (var participant in chat.Participants)
+        {
+            if (participant.UserId != userId)
+            {
+                await hub.Clients.User(participant.UserId)
+                    .SendAsync("MessagePinToggled", message.Id, message.IsPinned);
+            }
+        }
+
+        return Ok(new { message = "Status przypięcia zmieniony.", isPinned = message.IsPinned });
+    }
+
+
+    [HttpGet("pinned/{chatId}")]
+    [Authorize]
+    public async Task<IActionResult> GetPinnedMessages(string chatId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var chat = await _context.Chats.Include(c => c.Participants)
+                                       .FirstOrDefaultAsync(c => c.Id == chatId);
+
+        if (chat == null || !chat.Participants.Any(p => p.UserId == userId))
+            return Forbid();
+
+        var pinnedMessages = await _context.ChatMessages
+            .Where(m => m.ChatId == chatId && m.IsPinned)
+            .Include(m => m.Attachments)
+            .OrderByDescending(m => m.Timestamp)
+            .ToListAsync();
+
+        var result = pinnedMessages.Select(m => new ChatMessageDto
+        {
+            Id = m.Id,
+            SenderId = m.SenderId,
+            Message = m.Message,
+            Timestamp = m.Timestamp,
+            Attachments = m.Attachments.Select(a => new ChatAttachmentDto
+            {
+                FileName = a.FileName,
+                FilePath = a.FilePath
+            }).ToList()
+        });
+
+        return Ok(result);
+    }
 
 }
 

@@ -91,6 +91,34 @@ export function addMessage(type, message, time = null, messageId = null) {
         }
     });
 
+    // Create pin button
+    const pinButton = document.createElement("button");
+    pinButton.innerHTML = "📌";
+    pinButton.className = "pin-button btn btn-sm btn-warning mx-2";
+    pinButton.style.padding = "0.2rem 0.5rem";
+    pinButton.style.visibility = "hidden";
+    wrapper.addEventListener("mouseenter", () => {
+        pinButton.style.visibility = "visible";
+    });
+    wrapper.addEventListener("mouseleave", () => {
+        pinButton.style.visibility = "hidden";
+    });
+    // Handle pin button click
+    pinButton.addEventListener("click", async () => {
+        // Możesz oznaczyć wiadomość jako przypiętą, np. dodając klasę lub wykonując zapytanie
+        const res = await fetch(`/api/chat/pin/${messageId}`, {
+            method: "POST"
+        });
+
+        if (res.ok) {
+            pinButton.classList.toggle("active");
+            wrapper.classList.toggle("pinned");
+        } else {
+            console.log("Nie udało się przypiąć wiadomości", res);
+        }
+    });
+
+
     // Create message bubble
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type} p-2 rounded position-relative`;
@@ -144,11 +172,19 @@ export function addMessage(type, message, time = null, messageId = null) {
         timeSpan.textContent = formatMessageTime(date);
         wrapper.appendChild(timeSpan);
     }
+
+
     if (type === "sent") {
+        row.appendChild(pinButton);
         row.appendChild(editButton);
         row.appendChild(deleteButton);
+        row.appendChild(messageElement);
+    } else {
+        row.appendChild(messageElement);
+        row.appendChild(pinButton);
     }
-    row.appendChild(messageElement);
+
+    
     // Add row to wrapper
     wrapper.appendChild(row);
     // Append wrapper
@@ -184,6 +220,17 @@ connection.on("MessageEdited", (messageId, newMessage) => {
     const wrapper = document.querySelector(`[data-message-id="${messageId}"]`);
     if (wrapper) {
         updateMessageContent(wrapper, newMessage);
+    }
+});
+
+connection.on("MessagePinToggled", (messageId, isPinned) => {
+    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageEl) {
+        messageEl.classList.toggle("pinned", isPinned);
+        const pinBtn = messageEl.querySelector(".pin-button");
+        if (pinBtn) {
+            pinBtn.classList.toggle("active", isPinned);
+        }
     }
 });
 

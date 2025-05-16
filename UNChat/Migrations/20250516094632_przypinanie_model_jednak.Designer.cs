@@ -12,8 +12,8 @@ using UNChat.Context;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDbContext))]
-    [Migration("20250513220612_testtt")]
-    partial class testtt
+    [Migration("20250516094632_przypinanie_model_jednak")]
+    partial class przypinanie_model_jednak
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -212,6 +212,9 @@ namespace UNChat.Migrations
                     b.Property<string>("ChatId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .IsRequired()

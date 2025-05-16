@@ -204,3 +204,62 @@ function handleSearch() {
 
     document.getElementById("closeSearchResults").classList.remove("d-none");
 }
+document.getElementById("pinnedButton")?.addEventListener("click", async () => {
+    const chatId = selectedChatId;
+    const userId = document.getElementById("userId").value;
+    const pinnedList = document.getElementById("pinnedMessages");
+
+    // Jeśli lista już widoczna – ukryj i wyjdź
+    if (!pinnedList.classList.contains("d-none")) {
+        pinnedList.classList.add("d-none");
+        pinnedList.innerHTML = "";
+        return;
+    }
+
+    pinnedList.innerHTML = "";
+
+    if (!chatId || !userId) {
+        alert("Nie wybrano czatu!");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/chat/pinned/${chatId}`);
+        if (!response.ok) throw new Error("Nie udało się pobrać przypiętych wiadomości");
+
+        const pinnedMessages = await response.json();
+
+        if (pinnedMessages.length === 0) {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = "Brak przypiętych wiadomości.";
+            pinnedList.appendChild(li);
+        } else {
+            pinnedMessages.forEach(msg => {
+                const li = document.createElement("li");
+                li.className = "list-group-item list-group-item-action";
+                const snippet = msg.message?.slice(0, 50) || "Załącznik";
+                li.textContent = `${snippet}... (${new Date(msg.timestamp).toLocaleString()})`;
+
+                li.addEventListener("click", () => {
+                    const targetMessage = document.querySelector(`[data-message-id='${msg.id}']`);
+                    if (targetMessage) {
+                        targetMessage.scrollIntoView({ behavior: "smooth", block: "center" });
+                        const bubble = targetMessage.querySelector(".message");
+                        if (bubble) {
+                            bubble.classList.add("bg-warning", "rounded");
+                            setTimeout(() => bubble.classList.remove("bg-warning", "rounded"), 2000);
+                        }
+                    }
+                });
+
+                pinnedList.appendChild(li);
+            });
+        }
+
+        pinnedList.classList.remove("d-none");
+    } catch (error) {
+        console.error("Błąd pobierania przypiętych wiadomości:", error);
+        alert("Nie udało się pobrać przypiętych wiadomości.");
+    }
+});

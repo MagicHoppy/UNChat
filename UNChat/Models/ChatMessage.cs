@@ -12,6 +12,7 @@
         public DateTime Timestamp { get; set; }
 
         public List<ChatAttachment> Attachments { get; set; } = new();
+        public bool IsPinned { get; set; } = false;
 
     }
 
