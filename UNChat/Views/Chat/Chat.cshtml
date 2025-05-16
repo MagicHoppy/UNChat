@@ -90,6 +90,29 @@
         <h5 class="fw-bold mb-3">Zaproszenia</h5>
         <div id="requests" class="d-flex flex-column gap-2"></div>
     </div>
+
+    <div class="modal fade" id="groupSettingsModal" tabindex="-1" aria-labelledby="groupSettingsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="groupSettingsLabel">Ustawienia grupy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="groupMembersList" class="list-group mb-3"></ul>
+                    <div class="input-group">
+                        <div class="mb-3">
+                            <label for="inviteUserSearch" class="form-label">Zaproś znajomego</label>
+                            <input type="text" class="form-control" id="inviteUserSearch" placeholder="Wyszukaj znajomego...">
+                            <div id="inviteUserResults" class="list-group mt-2"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>

@@ -4,6 +4,7 @@ import { loadUsers } from "./user.js";
 
 let groupSelectionMode = false;
 let selectedUserIds = [];
+let groupSettingsModalInstance;
 
 export function enableGroupSelectionMode() {
     groupSelectionMode = true;
@@ -317,7 +318,123 @@ export async function loadGroupChats() {
         }
 
         listItem.appendChild(button);
+        const settingsBtn = document.createElement("button");
+        settingsBtn.className = "btn btn-outline-secondary btn-sm";
+        settingsBtn.innerHTML = '<i class="bi bi-gear"></i>';
+        settingsBtn.title = "Ustawienia czatu";
+        settingsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openGroupSettingsModal(chat.chatId, chat.chatName, chat.isAdmin);
+        });
+        buttonGroup.appendChild(settingsBtn);
+
         listItem.appendChild(buttonGroup);
         groupChatsList.appendChild(listItem);
     });
+}
+
+async function openGroupSettingsModal(chatId, chatName, isAdmin) {
+    document.getElementById("groupSettingsLabel").textContent = `Ustawienia: ${chatName}`;
+    const listContainer = document.getElementById("groupMembersList");
+    listContainer.innerHTML = "";
+
+    const res = await fetch(`/api/chat/members/${chatId}`);
+    const members = await res.json();
+    // Pobierz listę znajomych użytkownika
+    const currentUserId = document.getElementById("userId").value;
+    const friendsRes = await fetch(`/api/friends/${currentUserId}`);
+    const allFriends = await friendsRes.json();
+
+    // Filtruj tylko tych, którzy nie są jeszcze członkami grupy
+    const existingMemberIds = new Set(members.map(m => m.userId));
+    const potentialInvitees = allFriends.filter(f => !existingMemberIds.has(f.id));
+
+    members.forEach(member => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = member.name + (member.isAdmin ? " (administrator)" : "");
+        li.appendChild(nameSpan);
+
+        if (isAdmin && member.userId !== document.getElementById("userId").value) {
+            const btnGroup = document.createElement("div");
+
+            const removeBtn = document.createElement("button");
+            removeBtn.className = "btn btn-sm btn-outline-danger ms-2";
+            removeBtn.innerHTML = '<i class="bi bi-person-dash"></i>';
+            removeBtn.addEventListener("click", async () => {
+                if (confirm(`Usunąć ${member.name} z czatu?`)) {
+                    await fetch(`/api/chat/remove-member`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ chatId, userId: member.userId })
+                    });
+                    openGroupSettingsModal(chatId, chatName, isAdmin);
+                }
+            });
+
+            const toggleAdminBtn = document.createElement("button");
+            toggleAdminBtn.className = "btn btn-sm btn-outline-secondary ms-2";
+            toggleAdminBtn.innerHTML = member.isAdmin
+                ? '<i class="bi bi-shield-slash"></i>' // odbierz
+                : '<i class="bi bi-shield-check"></i>'; // nadaj
+            toggleAdminBtn.title = member.isAdmin ? "Odbierz uprawnienia administratora" : "Nadaj uprawnienia administratora";
+
+            toggleAdminBtn.addEventListener("click", async () => {
+                await fetch(`/api/chat/toggle-admin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId, userId: member.userId })
+                });
+                openGroupSettingsModal(chatId, chatName, isAdmin);
+            });
+            btnGroup.appendChild(toggleAdminBtn);
+
+            btnGroup.appendChild(removeBtn);
+            li.appendChild(btnGroup);
+        }
+
+        listContainer.appendChild(li);
+    });
+
+
+    const searchInput = document.getElementById("inviteUserSearch");
+    const resultsContainer = document.getElementById("inviteUserResults");
+
+    searchInput.oninput = () => {
+        const query = searchInput.value.toLowerCase();
+        resultsContainer.innerHTML = "";
+
+        if (query.length < 2) return; // opcjonalnie: zacznij po 2 znakach
+
+        const matches = potentialInvitees.filter(user => user.name.toLowerCase().includes(query));
+
+        if (matches.length === 0) {
+            resultsContainer.innerHTML = "<div class='text-muted'>Brak wyników</div>";
+            return;
+        }
+
+        matches.forEach(user => {
+            const item = document.createElement("button");
+            item.className = "list-group-item list-group-item-action";
+            item.textContent = user.name;
+            item.addEventListener("click", async () => {
+                await fetch(`/api/chat/invite`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId, userId: user.id })
+                });
+                searchInput.value = "";
+                resultsContainer.innerHTML = "";
+                openGroupSettingsModal(chatId, chatName, isAdmin); // odśwież modal
+            });
+            resultsContainer.appendChild(item);
+        });
+    };
+
+
+    if (!groupSettingsModalInstance) {
+        groupSettingsModalInstance = new bootstrap.Modal(document.getElementById("groupSettingsModal"));
+    }
+    groupSettingsModalInstance.show();
 }

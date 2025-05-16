@@ -303,14 +303,51 @@ public class ChatApiController : ControllerBase
         var userChat = await _context.UserChats
             .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == userId);
 
+        var chat = await _context.Chats
+            .Include(c => c.Participants)
+            .Include(c => c.Messages).ThenInclude(m => m.Attachments)
+            .FirstOrDefaultAsync(c => c.Id == chatId && c.IsGroup);
+
         if (userChat == null)
             return NotFound("Nie należysz do tego czatu.");
 
+        var isAdmin = chat.Participants.Any(p => p.UserId == userId && p.IsAdmin);
+
+        // Usuń użytkownika z czatu
         _context.UserChats.Remove(userChat);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Opuściłeś grupę." });
+        if (isAdmin)
+        {
+            // Odśwież dane czatu i uczestników po usunięciu użytkownika
+            var updatedChat = await _context.Chats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == chatId);
+
+            var otherParticipants = updatedChat.Participants.ToList();
+
+            // Sprawdź, czy którykolwiek z pozostałych uczestników jest adminem
+            bool hasOtherAdmins = otherParticipants.Any(p => p.IsAdmin);
+
+            // Jeśli nie ma żadnych adminów, wylosuj nowego
+            if (!hasOtherAdmins && otherParticipants.Any())
+            {
+                var random = new Random();
+                var randomParticipant = otherParticipants[random.Next(otherParticipants.Count)];
+                randomParticipant.IsAdmin = true;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Opuściłeś grupę jako administrator. Nowy administrator został wybrany." });
+            }
+
+            return Ok(new { message = "Opuściłeś grupę jako administrator." });
+        }
+        else
+        {
+            return Ok(new { message = "Opuściłeś grupę." });
+        }
     }
+
 
     [HttpDelete("delete-group/{chatId}")]
     [Authorize]
@@ -347,5 +384,122 @@ public class ChatApiController : ControllerBase
 
         return Ok(new { message = "Grupa została usunięta." });
     }
+    [HttpGet("members/{chatId}")]
+    [Authorize]
+    public async Task<IActionResult> GetChatMembers(string chatId)
+    {
+        var members = await _context.UserChats
+            .Where(uc => uc.ChatId == chatId)
+            .Select(uc => new
+            {
+                userId = uc.UserId,
+                name = uc.User.Name,
+                isAdmin = uc.IsAdmin
+            }).ToListAsync();
 
+        return Ok(members);
+    }
+
+    [HttpPost("remove-member")]
+    [Authorize]
+    public async Task<IActionResult> RemoveMember([FromBody] MemberEditDto dto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var chat = await _context.Chats.Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == dto.ChatId && c.IsGroup);
+
+        if (chat == null)
+            return NotFound("Czat nie istnieje.");
+
+        if (!chat.Participants.Any(p => p.UserId == userId && p.IsAdmin))
+            return Forbid("Brak uprawnień.");
+
+        var member = chat.Participants.FirstOrDefault(p => p.UserId == dto.UserId);
+        if (member != null)
+        {
+            _context.UserChats.Remove(member);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("promote")]
+    [Authorize]
+    public async Task<IActionResult> PromoteToAdmin([FromBody] MemberEditDto dto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var chat = await _context.Chats.Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == dto.ChatId && c.IsGroup);
+
+        if (chat == null)
+            return NotFound("Czat nie istnieje.");
+
+        if (!chat.Participants.Any(p => p.UserId == userId && p.IsAdmin))
+            return Forbid("Brak uprawnień.");
+
+        var member = chat.Participants.FirstOrDefault(p => p.UserId == dto.UserId);
+        if (member != null)
+        {
+            member.IsAdmin = true;
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+    [HttpPost("toggle-admin")]
+    [Authorize]
+    public async Task<IActionResult> ToggleAdmin([FromBody] MemberEditDto dto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var chat = await _context.Chats.Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == dto.ChatId && c.IsGroup);
+
+        if (chat == null)
+            return NotFound("Czat nie istnieje.");
+
+        if (!chat.Participants.Any(p => p.UserId == userId && p.IsAdmin))
+            return Forbid("Brak uprawnień.");
+
+        var member = chat.Participants.FirstOrDefault(p => p.UserId == dto.UserId);
+        if (member != null)
+        {
+            member.IsAdmin = !member.IsAdmin; // toggle
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("invite")]
+    [Authorize]
+    public async Task<IActionResult> InviteToGroup([FromBody] MemberEditDto dto)
+    {
+        var alreadyInGroup = await _context.UserChats
+            .AnyAsync(uc => uc.ChatId == dto.ChatId && uc.UserId == dto.UserId);
+
+        if (!alreadyInGroup)
+        {
+            _context.UserChats.Add(new UserChat
+            {
+                ChatId = dto.ChatId,
+                UserId = dto.UserId,
+                IsAdmin = false
+            });
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+
+
+}
+public class MemberEditDto
+{
+    public string ChatId { get; set; }
+    public string UserId { get; set; }
 }
