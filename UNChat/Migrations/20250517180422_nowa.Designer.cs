@@ -12,8 +12,8 @@ using UNChat.Context;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDbContext))]
-    [Migration("20250516094632_przypinanie_model_jednak")]
-    partial class przypinanie_model_jednak
+    [Migration("20250517180422_nowa")]
+    partial class nowa
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -6,7 +6,7 @@ function updateMessageContent(wrapper, newMessage) {
     messageElement.textContent = newMessage;
 
 }
-export function addMessage(type, message, time = null, messageId = null) {
+export function addMessage(type, message, time = null, messageId = null, senderName = "") {
     const messagesDiv = document.getElementById("messages");
 
 
@@ -14,6 +14,31 @@ export function addMessage(type, message, time = null, messageId = null) {
     const wrapper = document.createElement("div");
     wrapper.className = `d-flex flex-column ${type === "sent" ? "align-items-end" : "align-items-start"} mb-2`;
     wrapper.dataset.messageId = messageId;
+
+    if (senderName || time) {
+        const meta = document.createElement("div");
+        meta.className = "message-meta small text-muted mb-1";
+
+        // nazwa
+        if (senderName) {
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "fw-semibold";
+            nameSpan.textContent = senderName;
+            meta.appendChild(nameSpan);
+        }
+
+        // separator •
+        if (senderName && time) meta.append(" • ");
+
+        // czas
+        if (time) {
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "timestamp";
+            timeSpan.textContent = formatMessageTime(new Date(time));
+            meta.appendChild(timeSpan);
+        }
+        wrapper.appendChild(meta);
+    }
 
     // Create inner row
     const row = document.createElement("div");
@@ -165,13 +190,13 @@ export function addMessage(type, message, time = null, messageId = null) {
         messageElement.textContent = message;
     }
 
-    if (time) {
-        const timeSpan = document.createElement("small");
-        timeSpan.className = "timestamp text-muted mb-1 d-block";
-        const date = new Date(time);
-        timeSpan.textContent = formatMessageTime(date);
-        wrapper.appendChild(timeSpan);
-    }
+    //if (time) {
+    //    const timeSpan = document.createElement("small");
+    //    timeSpan.className = "timestamp text-muted mb-1 d-block";
+    //    const date = new Date(time);
+    //    timeSpan.textContent = formatMessageTime(date);
+    //    wrapper.appendChild(timeSpan);
+    //}
 
 
     if (type === "sent") {

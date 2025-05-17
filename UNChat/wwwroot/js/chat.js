@@ -25,13 +25,15 @@ export async function selectUser(chatId, userName) {
             const type = msg.senderId === senderId ? "sent" : "received";
 
             if (msg.message) {
-                addMessage(type, msg.message, msg.timestamp, msg.id);
+                addMessage(type, msg.message, msg.timestamp, msg.id, msg.senderName);
+
             }
 
             if (msg.attachments?.length > 0) {
                 msg.attachments.forEach(att => {
                     if (att.filePath) {
-                        addMessage(type, att.filePath, msg.timestamp, msg.id);
+                        addMessage(type, att.filePath, msg.timestamp, msg.id, msg.senderName);
+
                     }
                 });
             }
@@ -86,12 +88,12 @@ export function setupChat() {
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, message, attachmentUrl, timestamp, id, chatId) => {
+    connection.on("ReceiveMessage", (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
         const currentUserId = document.getElementById("userId").value;
         if (!currentUserId || senderId === currentUserId) return;
         if (chatId != selectedChatId) return;
-        if (message) addMessage("received", message, timestamp, id);
-        if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id);
+        if (message) addMessage("received", message, timestamp, id, senderName);
+        if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
     });
 
     connection.on("MessageRemoved", (messageId) => {
@@ -147,8 +149,8 @@ async function sendMessage() {
 
         const data = await res.json();
 
-        if (data.message) addMessage("sent", data.message, data.timestamp, data.id);
-        if (data.attachmentUrl) addMessage("sent", data.attachmentUrl, data.timestamp, data.id);
+        if (data.message) addMessage("sent", data.message, data.timestamp, data.id, data.senderName);
+        if (data.attachmentUrl) addMessage("sent", data.attachmentUrl, data.timestamp, data.id, data.senderName);
 
         messageInput.value = "";
         attachmentInput.value = null;

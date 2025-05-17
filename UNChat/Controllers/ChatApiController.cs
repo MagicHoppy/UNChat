@@ -85,18 +85,18 @@ public class ChatApiController : ControllerBase
         await _context.SaveChangesAsync();
 
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-
+        var sender = await _context.Users.FindAsync(senderId);
         // Wysyłaj tylko do uczestników tego konkretnego czatu
-       // await hub.Clients.Group(chatId)
+        // await hub.Clients.Group(chatId)
         //.SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
 
-        
+
         foreach (var participant in chat.Participants)
         {
             if (participant.UserId != senderId)
             {
                 await hub.Clients.User(participant.UserId)
-                    .SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
+                    .SendAsync("ReceiveMessage", senderId, sender.Name, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
             }
         }
 
@@ -106,6 +106,7 @@ public class ChatApiController : ControllerBase
             attachmentUrl = fileUrl,
             timestamp = chatMessage.Timestamp,
             id = chatMessage.Id,
+            senderName = sender.Name
         });
     }
 
@@ -208,22 +209,27 @@ public class ChatApiController : ControllerBase
     {
         try
         {
+            // 1) Pobieramy wiadomości
             var messages = await _context.ChatMessages
                 .Where(m => m.ChatId == chatId)
                 .Include(m => m.Attachments)
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
-            foreach (var message in messages){
-                Console.WriteLine(message.Id);
-                Console.WriteLine(message.ChatId);
-                Console.WriteLine(message.Message);
 
+            // 2) Wyciągamy unikalne senderId, aby jednym zapytaniem pobrać nazwy
+            var senderIds = messages.Select(m => m.SenderId).Distinct().ToList();
 
-            }
+            var userNames = await _context.Users
+                .Where(u => senderIds.Contains(u.Id))
+                .Select(u => new { u.Id, DisplayName = u.Name})
+                .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+            // 3) Mapujemy do DTO
             var messageDtos = messages.Select(m => new ChatMessageDto
             {
                 Id = m.Id,
                 SenderId = m.SenderId,
+                SenderName = userNames.TryGetValue(m.SenderId, out var name) ? name : "(nieznany)",
                 Message = m.Message,
                 Timestamp = m.Timestamp,
                 Attachments = m.Attachments?.Select(a => new ChatAttachmentDto
@@ -232,11 +238,11 @@ public class ChatApiController : ControllerBase
                     FilePath = a.FilePath
                 }).ToList() ?? new List<ChatAttachmentDto>()
             }).ToList();
+
             return Ok(messageDtos);
         }
         catch (Exception ex)
         {
-            // Zaloguj błąd
             Console.WriteLine($"Błąd w GetMessages: {ex.Message}");
             return StatusCode(500, "Wystąpił błąd podczas pobierania wiadomości.");
         }
