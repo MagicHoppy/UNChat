@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using UNChat.Models;
 
@@ -19,19 +20,36 @@ namespace UNChat.Controllers
             _signInManager = signInManager;
         }
 
-        // Rejestracja - GET (Widok formularza)
         [HttpGet]
         public IActionResult Register() => View();
 
-        // Rejestracja - POST (Obsługa formularza)
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            var user = new User { UserName = model.Email, Email = model.Email, Name = model.Name };
+            // Check for duplicate email and name
+            if (await _userManager.FindByEmailAsync(model.Email) != null)
+            {
+                ModelState.AddModelError("Email", "Ten adres e-mail jest już zarejestrowany.");
+                return View(model);
+            }
+
+            if (await _userManager.Users.AnyAsync(u => u.Name.ToLower() == model.Name.Trim().ToLower()))
+            {
+                ModelState.AddModelError("Name", "Ta nazwa jest już zajęta.");
+                return View(model);
+            }
+
+            var user = new User
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                Name = model.Name.Trim()
+            };
+
             var result = await _userManager.CreateAsync(user, model.Password);
-
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
@@ -39,9 +57,7 @@ namespace UNChat.Controllers
             }
 
             foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError("", error.Description);
-            }
+                ModelState.AddModelError(string.Empty, error.Description);
 
             return View(model);
         }
