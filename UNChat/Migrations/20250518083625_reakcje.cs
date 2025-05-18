@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class nowa : Migration
+    public partial class reakcje : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -267,6 +267,39 @@ namespace UNChat.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "MessageReactions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ChatMessageId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    EmojiId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MessageReactions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MessageReactions_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MessageReactions_ChatMessages_ChatMessageId",
+                        column: x => x.ChatMessageId,
+                        principalTable: "ChatMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MessageReactions_Emojis_EmojiId",
+                        column: x => x.EmojiId,
+                        principalTable: "Emojis",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -317,6 +350,22 @@ namespace UNChat.Migrations
                 column: "ChatId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MessageReactions_ChatMessageId_UserId_EmojiId",
+                table: "MessageReactions",
+                columns: new[] { "ChatMessageId", "UserId", "EmojiId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageReactions_EmojiId",
+                table: "MessageReactions",
+                column: "EmojiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageReactions_UserId",
+                table: "MessageReactions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserChats_ChatId",
                 table: "UserChats",
                 column: "ChatId");
@@ -344,10 +393,10 @@ namespace UNChat.Migrations
                 name: "ChatAttachments");
 
             migrationBuilder.DropTable(
-                name: "Emojis");
+                name: "Friends");
 
             migrationBuilder.DropTable(
-                name: "Friends");
+                name: "MessageReactions");
 
             migrationBuilder.DropTable(
                 name: "UserChats");
@@ -357,6 +406,9 @@ namespace UNChat.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatMessages");
+
+            migrationBuilder.DropTable(
+                name: "Emojis");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

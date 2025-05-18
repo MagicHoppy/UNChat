@@ -14,6 +14,7 @@
         public List<ChatAttachment> Attachments { get; set; } = new();
         public bool IsPinned { get; set; } = false;
 
+        public List<MessageReaction> Reactions { get; set; } = new();
     }
 
 }

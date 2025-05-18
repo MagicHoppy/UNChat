@@ -6,7 +6,7 @@ function updateMessageContent(wrapper, newMessage) {
     messageElement.textContent = newMessage;
 
 }
-export function addMessage(type, message, time = null, messageId = null, senderName = "") {
+export async function addMessage(type, message, time = null, messageId = null, senderName = "") {
     const messagesDiv = document.getElementById("messages");
 
 
@@ -144,6 +144,129 @@ export function addMessage(type, message, time = null, messageId = null, senderN
     });
 
 
+    // Create emoji button
+    const reactionButton = document.createElement("button");
+    reactionButton.innerHTML = "😀";
+    reactionButton.className = "pin-button btn btn-sm btn-warning";
+    reactionButton.style.padding = "0.2rem 0.5rem";
+    reactionButton.style.visibility = "hidden";
+    wrapper.addEventListener("mouseenter", () => {
+        reactionButton.style.visibility = "visible";
+    });
+    wrapper.addEventListener("mouseleave", () => {
+        reactionButton.style.visibility = "hidden";
+    });
+    // Handle emoji button click
+    // Handle emoji button click
+    // Handle emoji button click
+    reactionButton.addEventListener("click", async (e) => {
+        e.stopPropagation(); // zapobiega zamykaniu od razu
+
+        if (!messageId) return;
+
+        // Zamknij inne otwarte menu
+        document.querySelectorAll(".emoji-menu").forEach(menu => menu.remove());
+        document.removeEventListener("click", handleGlobalEmojiMenuClose); // uniknij wielokrotnego dodania
+
+        // Pobierz emoji z API
+        let emojis = [];
+        try {
+            const res = await fetch("/api/reactions/emojis");
+            emojis = await res.json(); // [{id: 1, symbol: "😀"}, ...]
+        } catch (err) {
+            console.error("Nie udało się pobrać emoji", err);
+            return;
+        }
+
+        // Stwórz menu
+        const menu = document.createElement("div");
+        menu.className = "emoji-menu d-flex flex-row p-2 border rounded bg-white shadow position-absolute";
+        menu.style.zIndex = 1000;
+        // Osadzenie menu w wiadomości
+        messageElement.style.position = "relative";
+        messageElement.appendChild(menu);
+
+        // Oblicz pozycję menu, by nie wyszło poza okno
+        requestAnimationFrame(() => {
+            const menuRect = menu.getBoundingClientRect();
+            const containerRect = document.getElementById("messages").getBoundingClientRect();
+
+            // Domyślnie po lewej
+            menu.style.left = "0";
+            menu.style.right = "auto";
+
+            // Jeśli wychodzi poza prawą krawędź — przesuń w lewo
+            if (menuRect.right > containerRect.right) {
+                menu.style.left = "auto";
+                menu.style.right = "0";
+            }
+
+            // Jeśli wychodzi poza dolną krawędź — przesuń menu nad przycisk
+            if (menuRect.bottom > containerRect.bottom) {
+                menu.style.top = "auto";
+                menu.style.bottom = "100%";
+            } else {
+                menu.style.top = "100%";
+                menu.style.bottom = "auto";
+            }
+        });
+
+
+        // Emoji jako przyciski w linii
+        emojis.forEach(emoji => {
+            const btn = document.createElement("button");
+            btn.className = "btn btn-sm btn-light";
+            btn.textContent = emoji.symbol;
+            btn.style.fontSize = "1.3rem";
+            btn.style.lineHeight = "1.5";
+            btn.style.padding = "0.3rem 0.5rem";
+
+            btn.addEventListener("click", async () => {
+                try {
+                    const res = await fetch("/api/reactions/add", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            chatMessageId: messageId,
+                            emojiId: emoji.id
+                        })
+                    });
+
+                    if (res.ok) {
+                        menu.remove();
+                        document.removeEventListener("click", handleGlobalEmojiMenuClose);
+                    } else {
+                        console.log("Błąd dodawania reakcji", await res.text());
+                    }
+                } catch (err) {
+                    console.error("Błąd:", err);
+                }
+            });
+
+            menu.appendChild(btn);
+        });
+
+        // Osadzenie menu w wiadomości
+        messageElement.style.position = "relative";
+        messageElement.appendChild(menu);
+
+        // Kliknięcie poza menu = zamknięcie
+        function handleGlobalEmojiMenuClose(event) {
+            if (!menu.contains(event.target)) {
+                menu.remove();
+                document.removeEventListener("click", handleGlobalEmojiMenuClose);
+            }
+        }
+        setTimeout(() => {
+            document.addEventListener("click", handleGlobalEmojiMenuClose);
+        }, 0);
+    });
+
+
+
+
     // Create message bubble
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type} p-2 rounded position-relative`;
@@ -200,6 +323,7 @@ export function addMessage(type, message, time = null, messageId = null, senderN
 
 
     if (type === "sent") {
+        row.appendChild(reactionButton);
         row.appendChild(pinButton);
         row.appendChild(editButton);
         row.appendChild(deleteButton);
@@ -207,13 +331,38 @@ export function addMessage(type, message, time = null, messageId = null, senderN
     } else {
         row.appendChild(messageElement);
         row.appendChild(pinButton);
+        row.appendChild(reactionButton);
     }
 
     
     // Add row to wrapper
     wrapper.appendChild(row);
+    
     // Append wrapper
     messagesDiv.appendChild(wrapper);
+    // Pobierz i pokaż reakcje pod wiadomością
+    if (messageId) {
+        try {
+            const resReactions = await fetch(`/api/reactions/${messageId}`);
+            const reactionData = await resReactions.json();
+
+            const reactionContainer = document.createElement("div");
+            reactionContainer.className = "reaction-container mt-1 d-flex flex-wrap gap-1";
+
+            reactionData.forEach(r => {
+                const btn = document.createElement("button");
+                btn.className = "btn btn-sm btn-light border";
+                btn.textContent = `${r.emoji} ${r.count}`;
+                btn.title = r.users.map(u => u.userName).join(", ");
+                btn.disabled = true;
+                reactionContainer.appendChild(btn);
+            });
+
+            wrapper.appendChild(reactionContainer);
+        } catch (err) {
+            console.error("Nie udało się pobrać reakcji:", err);
+        }
+    }
 
     // Scroll to bottom
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -259,3 +408,36 @@ connection.on("MessagePinToggled", (messageId, isPinned) => {
     }
 });
 
+connection.on("ReactionUpdated", (messageId) => {
+    const wrapper = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (wrapper) {
+        refreshReactions(wrapper, messageId);
+    }
+});
+
+
+async function refreshReactions(wrapper, messageId) {
+    const oldContainer = wrapper.querySelector(".reaction-container");
+    if (oldContainer) oldContainer.remove();
+
+    try {
+        const res = await fetch(`/api/reactions/${messageId}`);
+        const reactionData = await res.json();
+
+        const reactionContainer = document.createElement("div");
+        reactionContainer.className = "reaction-container mt-1 d-flex flex-wrap gap-1";
+
+        reactionData.forEach(r => {
+            const btn = document.createElement("button");
+            btn.className = "btn btn-sm btn-light border";
+            btn.textContent = `${r.emoji} ${r.count}`;
+            btn.title = r.users.map(u => u.userName).join(", ");
+            btn.disabled = true;
+            reactionContainer.appendChild(btn);
+        });
+
+        wrapper.appendChild(reactionContainer);
+    } catch (err) {
+        console.error("Nie udało się odświeżyć reakcji:", err);
+    }
+}

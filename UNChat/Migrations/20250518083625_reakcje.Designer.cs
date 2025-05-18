@@ -12,8 +12,8 @@ using UNChat.Context;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDbContext))]
-    [Migration("20250517180422_nowa")]
-    partial class nowa
+    [Migration("20250518083625_reakcje")]
+    partial class reakcje
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -268,6 +268,36 @@ namespace UNChat.Migrations
                     b.ToTable("Friends");
                 });
 
+            modelBuilder.Entity("UNChat.Models.MessageReaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChatMessageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmojiId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmojiId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ChatMessageId", "UserId", "EmojiId")
+                        .IsUnique();
+
+                    b.ToTable("MessageReactions");
+                });
+
             modelBuilder.Entity("UNChat.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -434,6 +464,33 @@ namespace UNChat.Migrations
                     b.Navigation("Chat");
                 });
 
+            modelBuilder.Entity("UNChat.Models.MessageReaction", b =>
+                {
+                    b.HasOne("UNChat.Models.ChatMessage", "ChatMessage")
+                        .WithMany("Reactions")
+                        .HasForeignKey("ChatMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNChat.Models.Emoji", "Emoji")
+                        .WithMany()
+                        .HasForeignKey("EmojiId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UNChat.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChatMessage");
+
+                    b.Navigation("Emoji");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("UNChat.Models.UserChat", b =>
                 {
                     b.HasOne("UNChat.Models.Chat", "Chat")
@@ -463,6 +520,8 @@ namespace UNChat.Migrations
             modelBuilder.Entity("UNChat.Models.ChatMessage", b =>
                 {
                     b.Navigation("Attachments");
+
+                    b.Navigation("Reactions");
                 });
 #pragma warning restore 612, 618
         }

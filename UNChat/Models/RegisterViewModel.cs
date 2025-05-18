@@ -5,7 +5,7 @@ namespace UNChat.Models
     public class RegisterViewModel
     {
         [Required]
-        [StringLength(50, MinimumLength = 2, ErrorMessage = "Imię musi mieć od 2 do 50 znaków")]
+        [StringLength(25, MinimumLength = 2, ErrorMessage = "Imię musi mieć od 2 do 25 znaków")]
         public string Name { get; set; }
 
         [Required, EmailAddress]
