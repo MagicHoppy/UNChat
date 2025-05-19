@@ -8,5 +8,8 @@
         public string Message { get; set; }
         public DateTime Timestamp { get; set; }
         public List<ChatAttachmentDto> Attachments { get; set; }
+        public bool Delivered { get; set; } // NOWE
+        public bool Read { get; set; }      // NOWE
+
     }
 }

@@ -20,22 +20,45 @@ export async function selectUser(chatId, userName) {
 
         const messages = await response.json();
         const senderId = document.getElementById("userId").value;
+        // Znajdź najnowszą wiadomość wysłaną przez obecnego użytkownika
+        const lastSentMessage = [...messages]
+            .filter(m => m.senderId === senderId)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
 
         messages.forEach(msg => {
             const type = msg.senderId === senderId ? "sent" : "received";
+            //const deliveryStatus = msg.delivered ? "sent" : null;
+            //const readStatus = msg.read ? "read" : "sent";
+            //const status = readStatus || deliveryStatus;
+
+            // Ustaw status tylko dla najnowszej wiadomości wysłanej przez użytkownika
+            let status = null;
+            if (msg.id === lastSentMessage?.id) {
+                status = msg.read ? "read" : (msg.delivered ? "sent" : null);
+            }
+
 
             if (msg.message) {
-                addMessage(type, msg.message, msg.timestamp, msg.id, msg.senderName);
+                addMessage(type, msg.message, msg.timestamp, msg.id, msg.senderName, status);
 
             }
 
             if (msg.attachments?.length > 0) {
                 msg.attachments.forEach(att => {
                     if (att.filePath) {
-                        addMessage(type, att.filePath, msg.timestamp, msg.id, msg.senderName);
+                        addMessage(type, att.filePath, msg.timestamp, msg.id, msg.senderName, status);
 
                     }
                 });
+            }
+
+            if (type === "received") {
+                connection.invoke("MarkAsDelivered", msg.id).catch(err => console.error(err));
+
+                // Opcjonalne opóźnienie, możesz dostosować
+                setTimeout(() => {
+                    connection.invoke("MarkAsRead", msg.id).catch(err => console.error(err));
+                }, 1000);
             }
         });
     } catch (error) {
@@ -88,13 +111,22 @@ export function setupChat() {
         }
     });
 
-    connection.on("ReceiveMessage", (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
-        const currentUserId = document.getElementById("userId").value;
-        if (!currentUserId || senderId === currentUserId) return;
-        if (chatId != selectedChatId) return;
-        if (message) addMessage("received", message, timestamp, id, senderName);
-        if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
-    });
+    connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
+    const currentUserId = document.getElementById("userId").value;
+    if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) return;
+
+    if (message) addMessage("received", message, timestamp, id, senderName);
+    if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
+
+    // oznacz jako "dostarczono"
+    connection.invoke("MarkAsDelivered", id).catch(err => console.error(err));
+
+    // oznacz jako "przeczytano" – opcjonalnie z opóźnieniem
+    setTimeout(() => {
+        connection.invoke("MarkAsRead", id).catch(err => console.error(err));
+    }, 1000);
+});
+
 
     connection.on("MessageRemoved", (messageId) => {
         const messageElement = document.querySelector(`[data-message-id='${messageId}']`);

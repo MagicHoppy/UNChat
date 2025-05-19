@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class reakcje : Migration
+    public partial class statusy_wiadomosci : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -268,6 +268,48 @@ namespace UNChat.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatMessageDeliveries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MessageId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeliveredAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessageDeliveries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatMessageDeliveries_ChatMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "ChatMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMessageReads",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MessageId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessageReads", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatMessageReads_ChatMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "ChatMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MessageReactions",
                 columns: table => new
                 {
@@ -345,6 +387,16 @@ namespace UNChat.Migrations
                 column: "ChatMessageId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatMessageDeliveries_MessageId",
+                table: "ChatMessageDeliveries",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessageReads_MessageId",
+                table: "ChatMessageReads",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessages_ChatId",
                 table: "ChatMessages",
                 column: "ChatId");
@@ -391,6 +443,12 @@ namespace UNChat.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatAttachments");
+
+            migrationBuilder.DropTable(
+                name: "ChatMessageDeliveries");
+
+            migrationBuilder.DropTable(
+                name: "ChatMessageReads");
 
             migrationBuilder.DropTable(
                 name: "Friends");

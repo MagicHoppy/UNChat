@@ -15,6 +15,8 @@ namespace UNChat.Context
         public DbSet<Chat> Chats { get; set; }
         public DbSet<UserChat> UserChats { get; set; }
         public DbSet<MessageReaction> MessageReactions { get; set; }
+        public DbSet<ChatMessageDelivery> ChatMessageDeliveries { get; set; }
+        public DbSet<ChatMessageRead> ChatMessageReads { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -68,6 +70,18 @@ namespace UNChat.Context
             modelBuilder.Entity<MessageReaction>()
                 .HasIndex(r => new { r.ChatMessageId, r.UserId, r.EmojiId })
                 .IsUnique(); // jeden użytkownik może raz zareagować daną emotką na daną wiadomość
+
+            modelBuilder.Entity<ChatMessageDelivery>()
+                .HasOne(d => d.Message)
+                .WithMany(m => m.Deliveries)
+                .HasForeignKey(d => d.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatMessageRead>()
+                .HasOne(r => r.Message)
+                .WithMany(m => m.Reads)
+                .HasForeignKey(r => r.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 

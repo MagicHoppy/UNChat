@@ -6,7 +6,7 @@ function updateMessageContent(wrapper, newMessage) {
     messageElement.textContent = newMessage;
 
 }
-export async function addMessage(type, message, time = null, messageId = null, senderName = "") {
+export async function addMessage(type, message, time = null, messageId = null, senderName = "", status = "sent") {
     const messagesDiv = document.getElementById("messages");
 
 
@@ -37,6 +37,15 @@ export async function addMessage(type, message, time = null, messageId = null, s
             timeSpan.textContent = formatMessageTime(new Date(time));
             meta.appendChild(timeSpan);
         }
+
+        if (type === "sent") {
+            const statusSpan = document.createElement("span");
+            statusSpan.className = "status-icon ms-1";
+            console.log(status);
+            statusSpan.innerHTML = getStatusIcon(status);
+            meta.appendChild(statusSpan);
+        }
+
         wrapper.appendChild(meta);
     }
 
@@ -415,6 +424,18 @@ connection.on("ReactionUpdated", (messageId) => {
     }
 });
 
+connection.on("MessageDelivered", (messageId, userId) => {
+    const msgEl = document.querySelector(`[data-message-id='${messageId}']`);
+    const icon = msgEl?.querySelector(".status-icon");
+    if (icon) icon.innerHTML = getStatusIcon("delivered");
+});
+
+connection.on("MessageRead", (messageId, userId) => {
+    const msgEl = document.querySelector(`[data-message-id='${messageId}']`);
+    const icon = msgEl?.querySelector(".status-icon");
+    if (icon) icon.innerHTML = getStatusIcon("read");
+});
+
 
 async function refreshReactions(wrapper, messageId) {
     const oldContainer = wrapper.querySelector(".reaction-container");
@@ -439,5 +460,17 @@ async function refreshReactions(wrapper, messageId) {
         wrapper.appendChild(reactionContainer);
     } catch (err) {
         console.error("Nie udało się odświeżyć reakcji:", err);
+    }
+}
+function getStatusIcon(status) {
+    switch (status) {
+        case "sent":
+            return `<i class="bi bi-check"></i>`; // jedna fajka
+        case "delivered":
+            return `<i class="bi bi-check-all"></i>`; // dwie fajki
+        case "read":
+            return `<i class="bi bi-eye-fill"></i>`; // oko
+        default:
+            return "";
     }
 }

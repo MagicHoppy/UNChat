@@ -236,7 +236,12 @@ public class ChatApiController : ControllerBase
                 {
                     FileName = a.FileName,
                     FilePath = a.FilePath
-                }).ToList() ?? new List<ChatAttachmentDto>()
+                }).ToList() ?? new List<ChatAttachmentDto>(),
+
+                Delivered = _context.ChatMessageDeliveries
+                    .Any(d => d.MessageId == m.Id && d.UserId != m.SenderId), // lub == currentUserId jeśli chcesz dokładnie
+                Read = _context.ChatMessageReads
+                    .Any(r => r.MessageId == m.Id && r.UserId != m.SenderId)
             }).ToList();
 
             return Ok(messageDtos);
