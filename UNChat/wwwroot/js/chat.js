@@ -34,7 +34,7 @@ export async function selectUser(chatId, userName) {
             // Ustaw status tylko dla najnowszej wiadomości wysłanej przez użytkownika
             let status = null;
             if (msg.id === lastSentMessage?.id) {
-                status = msg.read ? "read" : (msg.delivered ? "sent" : null);
+                status = msg.read ? "read" : (msg.delivered ? "delivered" : 'sent');
             }
 
 

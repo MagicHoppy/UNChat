@@ -223,6 +223,7 @@ public class ChatApiController : ControllerBase
                 .Where(u => senderIds.Contains(u.Id))
                 .Select(u => new { u.Id, DisplayName = u.Name})
                 .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+            //var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             // 3) Mapujemy do DTO
             var messageDtos = messages.Select(m => new ChatMessageDto

@@ -38,10 +38,9 @@ export async function addMessage(type, message, time = null, messageId = null, s
             meta.appendChild(timeSpan);
         }
 
-        if (type === "sent") {
+        if (type === "sent" && status) {
             const statusSpan = document.createElement("span");
             statusSpan.className = "status-icon ms-1";
-            console.log(status);
             statusSpan.innerHTML = getStatusIcon(status);
             meta.appendChild(statusSpan);
         }
@@ -471,6 +470,6 @@ function getStatusIcon(status) {
         case "read":
             return `<i class="bi bi-eye-fill"></i>`; // oko
         default:
-            return "";
+            return `<i class="bi bi-check"></i>`;
     }
 }
