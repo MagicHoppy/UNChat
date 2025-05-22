@@ -317,6 +317,58 @@ export async function addMessage(type, message, time = null, messageId = null, s
         link.className = "btn btn-sm btn-outline-primary";
         messageElement.appendChild(link);
     }
+    else if (message.includes("https://www.openstreetmap.org/?mlat=")) {
+        // Extract coordinates from URL
+        const urlObj = new URL(message);
+        const lat = parseFloat(urlObj.searchParams.get("mlat"));
+        const lng = parseFloat(urlObj.searchParams.get("mlon"));
+        const zoom = urlObj.hash.split("/")[1] || "16"; // Default zoom 16
+
+        // Calculate a small bounding box around the point (~100m)
+        const bboxPadding = 0.002; // Adjust this to control zoom level (smaller = more zoomed in)
+        const bbox = [
+            lng - bboxPadding, // min longitude
+            lat - bboxPadding, // min latitude
+            lng + bboxPadding, // max longitude
+            lat + bboxPadding  // max latitude
+        ].join(",");
+
+        // Correct embed URL with marker and tight bounding box
+        const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+
+        const mapContainer = document.createElement("div");
+        mapContainer.className = "map-container";
+        mapContainer.style.width = "250px";
+        mapContainer.style.height = "150px";
+        mapContainer.style.background = "#eee";
+        mapContainer.style.display = "flex";
+        mapContainer.style.alignItems = "center";
+        mapContainer.style.justifyContent = "center";
+
+        const mapButton = document.createElement("button");
+        mapButton.className = "btn btn-primary btn-sm";
+        mapButton.textContent = "Show Map";
+        mapButton.addEventListener("click", () => {
+            const iframe = document.createElement("iframe");
+            iframe.src = embedUrl;
+            iframe.width = "250";
+            iframe.height = "150";
+            iframe.style.border = "0";
+            mapContainer.innerHTML = "";
+            mapContainer.appendChild(iframe);
+        });
+
+        mapContainer.appendChild(mapButton);
+        messageElement.appendChild(mapContainer);
+
+        // Also add a link to open full map
+        const link = document.createElement("a");
+        link.href = message;
+        link.textContent = "Open in OpenStreetMap";
+        link.target = "_blank";
+        link.className = "d-block mt-1";
+        messageElement.appendChild(link);
+    }
     else {
         messageElement.textContent = message;
     }

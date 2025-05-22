@@ -66,6 +66,7 @@ export async function selectUser(chatId, userName) {
     }
 }
 
+
 export function setupChat() {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
@@ -110,6 +111,8 @@ export function setupChat() {
             await sendMessage();
         }
     });
+    locationSelection();
+
 
     connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
     const currentUserId = document.getElementById("userId").value;
@@ -144,6 +147,86 @@ export function setupChat() {
         connection.off("MessageRemoved");
     };
 }
+function locationSelection() {
+    let leafletMap = null;
+    let leafletMarker = null;
+    let selectedLocation = null;
+
+    const mapModalEl = document.getElementById('locationModal');
+    const mapModal = new bootstrap.Modal(mapModalEl);
+    const confirmBtn = document.getElementById('confirmLocation');
+
+    // Initialize or refresh Leaflet map when modal opens
+    mapModalEl.addEventListener('shown.bs.modal', () => {
+        setTimeout(() => {
+            if (!leafletMap) {
+                leafletMap = L.map('map').setView([52.2297, 21.0122], 13); // Warsaw
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19,
+                }).addTo(leafletMap);
+
+                leafletMap.on('click', function (e) {
+                    selectedLocation = e.latlng;
+                    if (leafletMarker) {
+                        leafletMarker.setLatLng(e.latlng);
+                    } else {
+                        leafletMarker = L.marker(e.latlng).addTo(leafletMap);
+                    }
+                });
+            } else {
+                leafletMap.invalidateSize(); // Ensure map renders correctly
+            }
+        }, 100); // Give DOM time to paint
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        if (!selectedLocation) return;
+        const lat = selectedLocation.lat.toFixed(6);
+        const lng = selectedLocation.lng.toFixed(6);
+        const osmLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+        //alert(`Sending location:\n${osmLink}`); // Replace with your sending logic
+        sendLocationMessage(osmLink);
+        bootstrap.Modal.getInstance(mapModalEl).hide();
+    });
+    // Fix backdrop bug and restore UI interaction
+    mapModalEl.addEventListener('hidden.bs.modal', () => {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style = '';
+    });
+
+
+}
+
+async function sendLocationMessage(locationUrl) {
+    const senderId = document.getElementById("userId").value;
+    if (!senderId || !selectedChatId) {
+        alert("Chat not selected!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("senderId", senderId);
+    formData.append("chatId", selectedChatId);
+    formData.append("message", locationUrl);
+
+    try {
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const data = await res.json();
+        if (data.message) addMessage("sent", data.message, data.timestamp, data.id, data.senderName);
+    } catch (error) {
+        console.error("Failed to send location:", error);
+    }
+}
+
 
 async function sendMessage() {
     const senderId = document.getElementById("userId").value;
