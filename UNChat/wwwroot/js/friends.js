@@ -1,6 +1,7 @@
 ﻿import { selectUser } from "./chat.js";
 import { connection } from "./connection.js";
 import { loadUsers } from "./user.js";
+import { unreadMessages } from "./chat.js";
 
 let groupSelectionMode = false;
 let selectedUserIds = [];
@@ -36,6 +37,8 @@ export async function loadFriends() {
         userButton.className = "btn btn-link text-start flex-grow-1";
         userButton.textContent = friend.name;
         userButton.dataset.id = friend.chatId;
+        userButton.classList.add("user-btn");
+
         console.log(friend.chatId);
 
         if (groupSelectionMode) {
@@ -275,7 +278,17 @@ export async function loadGroupChats() {
 
         const button = document.createElement("button");
         button.className = "btn btn-link text-start flex-grow-1";
+        button.dataset.id = chat.chatId; // ważne do identyfikacji
         button.textContent = chat.chatName || "Grupa bez nazwy";
+
+        // Dodaj wykrzyknik, jeśli są nieprzeczytane wiadomości
+        if (unreadMessages[chat.chatId]) {
+            const exclamation = document.createElement("span");
+            exclamation.className = "unread-indicator text-danger fw-bold ms-2";
+            exclamation.textContent = "!";
+            button.appendChild(exclamation);
+        }
+
         button.addEventListener("click", () => selectUser(chat.chatId, chat.chatName));
 
         const buttonGroup = document.createElement("div");
@@ -317,7 +330,6 @@ export async function loadGroupChats() {
             buttonGroup.appendChild(deleteBtn);
         }
 
-        listItem.appendChild(button);
         const settingsBtn = document.createElement("button");
         settingsBtn.className = "btn btn-outline-secondary btn-sm";
         settingsBtn.innerHTML = '<i class="bi bi-gear"></i>';
@@ -328,10 +340,12 @@ export async function loadGroupChats() {
         });
         buttonGroup.appendChild(settingsBtn);
 
+        listItem.appendChild(button);
         listItem.appendChild(buttonGroup);
         groupChatsList.appendChild(listItem);
     });
 }
+
 
 async function openGroupSettingsModal(chatId, chatName, isAdmin) {
     document.getElementById("groupSettingsLabel").textContent = `Ustawienia: ${chatName}`;

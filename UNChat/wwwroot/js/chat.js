@@ -3,6 +3,7 @@ import { connection } from "./connection.js";
 import { searchGifs } from "./gif.js";
 
 export let selectedChatId = null;
+export const unreadMessages = {}; // { chatId: true }
 
 export async function selectUser(chatId, userName) {
     selectedChatId = chatId;
@@ -13,6 +14,13 @@ export async function selectUser(chatId, userName) {
     if (selectedButton) selectedButton.classList.add("active");
 
     document.getElementById("messages").innerHTML = "";
+
+    delete unreadMessages[chatId];
+    const btn = document.querySelector(`#friends [data-id='${chatId}'] .unread-indicator`);
+    if (btn) btn.remove();
+
+    const groupBtn = document.querySelector(`#groupChats [data-id='${chatId}'] .unread-indicator`);
+    if (groupBtn) groupBtn.remove();
 
     try {
         const response = await fetch(`/api/chat/messages/${chatId}`);
@@ -116,7 +124,15 @@ export function setupChat() {
 
     connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
     const currentUserId = document.getElementById("userId").value;
-    if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) return;
+        if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) {
+            // NOWOŚĆ: Zaznacz jako nieprzeczytane
+            if (chatId !== selectedChatId) {
+                unreadMessages[chatId] = true;
+                markChatAsUnread(chatId);
+            }
+            return;
+        }
+
 
     if (message) addMessage("received", message, timestamp, id, senderName);
     if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
@@ -380,3 +396,16 @@ document.getElementById("pinnedButton")?.addEventListener("click", async () => {
         alert("Nie udało się pobrać przypiętych wiadomości.");
     }
 });
+function markChatAsUnread(chatId) {
+    const userButton = document.querySelector(`#friends [data-id='${chatId}']`);
+    const groupButton = document.querySelector(`#groupChats [data-id='${chatId}']`);
+
+    [userButton, groupButton].forEach(btn => {
+        if (btn && !btn.querySelector(".unread-indicator")) {
+            const indicator = document.createElement("span");
+            indicator.className = "unread-indicator text-danger fw-bold ms-2";
+            indicator.textContent = "!";
+            btn.appendChild(indicator);
+        }
+    });
+}
