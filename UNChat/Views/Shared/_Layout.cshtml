@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/UNChat.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
 </head>
 <body>
     <header>
@@ -28,7 +30,31 @@
                     </ul>
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <p class="navbar-text">Witaj, @User.Identity.Name!</p>
+                        <div class="dropdown ms-auto me-3">
+                            <button class="btn d-flex align-items-center"
+                                    id="profileDropdown"
+                                    style="padding: 0.2rem 0.5rem;"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                <i class="bi bi-person-circle fs-4"></i>
+                            </button>
+
+
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li class="dropdown-item-text">
+                                    @{
+                                        var currentUser = await UserManager.GetUserAsync(User);
+                                        var displayName = currentUser?.Name ?? User.Identity?.Name;
+                                    }
+                                    <strong>@displayName</strong>
+
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/Account/EditProfile">Edytuj profil</a></li>
+                            </ul>
+                        </div>
+
+                        <p class="navbar-text">Witaj, @displayName!</p>
                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                             <button type="submit" class="btn btn-danger">Wyloguj</button>
                         </form>
