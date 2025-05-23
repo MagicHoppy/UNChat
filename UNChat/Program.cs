@@ -59,6 +59,8 @@ builder.Services.AddControllersWithViews()
 // Additional Services
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddScoped<UserManager<User>>();
 
 var app = builder.Build();
 
@@ -67,7 +69,8 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<UNChatDbContext>();
-    DbInitializer.Initialize(context);
+    DbInitializer.Initialize(context, services);
+
 }
 
 // Configure the HTTP request pipeline.

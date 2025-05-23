@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class statusy_wiadomosci : Migration
+    public partial class migracja1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
