@@ -1,6 +1,7 @@
 ﻿import { addMessage } from "./utils.js";
 import { connection } from "./connection.js";
 import { searchGifs } from "./gif.js";
+import { showToast } from "./friends.js";
 
 export let selectedChatId = null;
 export const unreadMessages = {}; // { chatId: true }
@@ -123,7 +124,8 @@ export function setupChat() {
 
 
     connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
-    const currentUserId = document.getElementById("userId").value;
+        const currentUserId = document.getElementById("userId").value;
+
         if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) {
             // NOWOŚĆ: Zaznacz jako nieprzeczytane
             if (chatId !== selectedChatId) {
@@ -133,19 +135,27 @@ export function setupChat() {
             return;
         }
 
+        if (message) addMessage("received", message, timestamp, id, senderName);
+        if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
 
-    if (message) addMessage("received", message, timestamp, id, senderName);
-    if (attachmentUrl) addMessage("received", attachmentUrl, timestamp, id, senderName);
+        // oznacz jako "dostarczono"
+        connection.invoke("MarkAsDelivered", id).catch(err => console.error(err));
 
-    // oznacz jako "dostarczono"
-    connection.invoke("MarkAsDelivered", id).catch(err => console.error(err));
+        // oznacz jako "przeczytano" – opcjonalnie z opóźnieniem
+        setTimeout(() => {
+            connection.invoke("MarkAsRead", id).catch(err => console.error(err));
+        }, 1000);
+    });
 
-    // oznacz jako "przeczytano" – opcjonalnie z opóźnieniem
-    setTimeout(() => {
-        connection.invoke("MarkAsRead", id).catch(err => console.error(err));
-    }, 1000);
+
+connection.on("MentionNotification", ({ from, chatId, message, timestamp }) => {
+    const formattedTime = new Date(timestamp).toLocaleTimeString(); // lub .toLocaleString() dla daty + czasu
+
+    const shortMsg = message.length > 100 ? message.slice(0, 100) + "..." : message;
+    const alertMessage = `${from} wspomniał Cię w czacie. <br><em>"${shortMsg}"</em><br><small>${formattedTime}</small>`;
+
+    showToast("Nowa wzmianka", alertMessage, "primary");
 });
-
 
     connection.on("MessageRemoved", (messageId) => {
         const messageElement = document.querySelector(`[data-message-id='${messageId}']`);

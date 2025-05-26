@@ -204,7 +204,7 @@ export async function removeFriend(friendId) {
 }
 
 // Helper function for Bootstrap toast notifications
-function showToast(title, message, type = "info") {
+export function showToast(title, message, type = "info") {
     const toastContainer = document.getElementById("toastContainer") || createToastContainer();
     const toastId = `toast-${Date.now()}`;
 
@@ -258,6 +258,8 @@ connection.on("FriendAdded", (addedFriendId) => {
 
     }
 });
+
+
 
 export async function loadGroupChats() {
     const userId = document.getElementById("userId").value;

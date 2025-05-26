@@ -83,9 +83,43 @@ public class ChatApiController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
-
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
         var sender = await _context.Users.FindAsync(senderId);
+        // Wykryj wzmianki @nazwaUzytkownika
+
+        var mentionedUsers = new List<User>();
+        if (!string.IsNullOrEmpty(message))
+        {
+            var allUsers = await _context.Users.ToListAsync();
+            foreach (var userr in allUsers)
+            {
+                if (!string.IsNullOrEmpty(userr.Name) && message.Contains($"@{userr.Name}", StringComparison.OrdinalIgnoreCase))
+                {
+                    mentionedUsers.Add(userr);
+                }
+            }
+        }
+
+        // Wyślij powiadomienia do wzmiankowanych użytkowników
+        var chatHub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+
+        foreach (var mentionedUser in mentionedUsers)
+        {
+            if (mentionedUser.Id != senderId)
+            {
+                await chatHub.Clients.User(mentionedUser.Id)
+                    .SendAsync("MentionNotification", new
+                    {
+                        from = sender.Name,
+                        chatId,
+                        message,
+                        timestamp = chatMessage.Timestamp
+                    });
+            }
+        }
+
+
+        
         // Wysyłaj tylko do uczestników tego konkretnego czatu
         // await hub.Clients.Group(chatId)
         //.SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
