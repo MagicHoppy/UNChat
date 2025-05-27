@@ -107,11 +107,18 @@ public class ChatApiController : ControllerBase
         {
             if (mentionedUser.Id != senderId)
             {
+                // ✅ Check if the mentioned user is still in the chat
+                bool isParticipant = chat.Participants.Any(p => p.UserId == mentionedUser.Id);
+                if (!isParticipant)
+                    continue;
+
                 await chatHub.Clients.User(mentionedUser.Id)
                     .SendAsync("MentionNotification", new
                     {
                         from = sender.Name,
+                        senderId,
                         chatId,
+                        chatName = chat.Name,
                         message,
                         timestamp = chatMessage.Timestamp
                     });
@@ -119,7 +126,7 @@ public class ChatApiController : ControllerBase
         }
 
 
-        
+
         // Wysyłaj tylko do uczestników tego konkretnego czatu
         // await hub.Clients.Group(chatId)
         //.SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);

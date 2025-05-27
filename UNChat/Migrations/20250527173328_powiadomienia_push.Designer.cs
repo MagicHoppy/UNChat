@@ -12,8 +12,8 @@ using UNChat.Context;
 namespace UNChat.Migrations
 {
     [DbContext(typeof(UNChatDbContext))]
-    [Migration("20250522132958_migracja1")]
-    partial class migracja1
+    [Migration("20250527173328_powiadomienia_push")]
+    partial class powiadomienia_push
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

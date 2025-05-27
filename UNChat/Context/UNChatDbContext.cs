@@ -17,6 +17,7 @@ namespace UNChat.Context
         public DbSet<MessageReaction> MessageReactions { get; set; }
         public DbSet<ChatMessageDelivery> ChatMessageDeliveries { get; set; }
         public DbSet<ChatMessageRead> ChatMessageReads { get; set; }
+        //public DbSet<PushSubscription> PushSubscriptions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

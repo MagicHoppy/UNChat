@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class migracja1 : Migration
+    public partial class powiadomienia_push : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

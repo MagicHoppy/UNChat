@@ -14,5 +14,15 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFriendRequests();
     setupChat();
     setupEmojiPicker();
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => {
+                console.log('Service Worker registered!', reg);
+            })
+            .catch(err => {
+                console.error('Service Worker registration failed:', err);
+            });
+    }
+
 });
 setInterval(loadFriends, 30000); // refresh every 30 seconds

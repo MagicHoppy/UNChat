@@ -80,7 +80,7 @@ export function setupChat() {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const attachmentInput = document.getElementById("attachmentInput");
-
+    subscribeUser();
     if (!messageInput || !sendButton || !attachmentInput) {
         console.error("Brak wymaganych elementów DOM");
         return;
@@ -125,7 +125,6 @@ export function setupChat() {
 
     connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
         const currentUserId = document.getElementById("userId").value;
-
         if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) {
             // NOWOŚĆ: Zaznacz jako nieprzeczytane
             if (chatId !== selectedChatId) {
@@ -148,14 +147,42 @@ export function setupChat() {
     });
 
 
-connection.on("MentionNotification", ({ from, chatId, message, timestamp }) => {
-    const formattedTime = new Date(timestamp).toLocaleTimeString(); // lub .toLocaleString() dla daty + czasu
+    connection.on("MentionNotification", ({ from, senderId, chatId, chatName, message, timestamp }) => {
+        const formattedTime = new Date(timestamp).toLocaleTimeString(); // or .toLocaleString() for full date + time
+        console.log(chatName)
+        const displayChatName = chatName == null ? 'prywatnym' : chatName;
 
-    const shortMsg = message.length > 100 ? message.slice(0, 100) + "..." : message;
-    const alertMessage = `${from} wspomniał Cię w czacie. <br><em>"${shortMsg}"</em><br><small>${formattedTime}</small>`;
+        const shortMsg = message.length > 100 ? message.slice(0, 100) + "..." : message;
+        const alertMessage = `${from} wspomniał Cię w czacie ${displayChatName}. <br><em>"${shortMsg}"</em><br><small>${formattedTime}</small>`;
+        const notificationMessage = `${from} wspomniał Cię w czacie ${displayChatName} "${shortMsg}"${formattedTime}`
+        async function sendPushNotification(payload) {
+            await fetch('/notifications/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: payload,
+                    userIds: [currentUserId]  // Only send to the current user
+                })
+            });
+        }
 
-    showToast("Nowa wzmianka", alertMessage, "primary");
-});
+        const userIdElement = document.getElementById("userId");
+        const currentUserId = userIdElement ? userIdElement.value : null;
+
+        if (!currentUserId) {
+            console.warn("User ID element not found or empty.");
+            return;
+        }
+
+        console.log("id powiadomienia:", currentUserId);
+        console.log("nadawca:", senderId);
+
+        if (currentUserId !== senderId) {
+            sendPushNotification(notificationMessage);
+        }
+
+        showToast("Nowa wzmianka", alertMessage, "primary");
+    });
 
     connection.on("MessageRemoved", (messageId) => {
         const messageElement = document.querySelector(`[data-message-id='${messageId}']`);
@@ -173,6 +200,50 @@ connection.on("MentionNotification", ({ from, chatId, message, timestamp }) => {
         connection.off("MessageRemoved");
     };
 }
+
+async function subscribeUser() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            // Register and wait for it to be active
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;  // ✅ Wait for active state
+
+            // Subscribe to push
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array('BKY37T-xh1GCXAWSBySR27YKyV0MxZpODbVIRXH4CkbkScQOhb9mMKyRcS24R3P8T1yjCRXXo8DAPZ8EilT7ZGM')
+            });
+
+            // Send subscription to the server
+            await fetch('/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: document.getElementById("userId").value,
+                    subscription
+                })
+            });
+
+            console.log("Push subscription successful:", subscription);
+        } catch (error) {
+            console.error("Push subscription failed:", error);
+        }
+    } else {
+        console.warn("Push messaging is not supported.");
+    }
+}
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
 function locationSelection() {
     let leafletMap = null;
     let leafletMarker = null;
