@@ -71,3 +71,117 @@ audio {
     height: 400px;
     width: 100%;
 }
+
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --accent-color: #ffc107;
+    --background-color: #f4f6f9;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    --text-color: #212529;
+}
+
+/* Ogólne ustawienia */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h4, h5 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Karty i kontenery */
+#chatBox, #friendList, #userList, #requestsContainer {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Wiadomości */
+#messages {
+    background-color: #e9ecef;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    height: 400px;
+    overflow-y: auto;
+}
+
+/* Styl wiadomości */
+.message {
+    max-width: 70%;
+    margin-bottom: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+    clear: both;
+    font-size: 0.95rem;
+    word-wrap: break-word;
+}
+
+    .message.sent {
+        background-color: #d1e7dd;
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .message.received {
+        background-color: #ffffff;
+        border: 1px solid #ced4da;
+    }
+
+/* Input */
+input, .form-control {
+    border-radius: 10px;
+    padding: 0.6rem;
+    border: 1px solid #ced4da;
+}
+
+/* Przyciski */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-warning {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: black;
+}
+
+.btn-light {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+}
+
+/* Statusy użytkowników */
+.status-online {
+    background-color: #198754;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.status-offline {
+    background-color: #6c757d;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Header czatu */
+#chatHeader {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    font-weight: bold;
+}
