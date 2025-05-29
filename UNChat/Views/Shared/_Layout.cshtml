@@ -54,13 +54,18 @@
                                     @{
                                         var currentUser = await UserManager.GetUserAsync(User);
                                         var displayName = currentUser?.Name ?? User.Identity?.Name;
+                                        var isAdmin = await UserManager.IsInRoleAsync(currentUser, "Administrator");
                                     }
                                     <strong>@displayName</strong>
-
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/Account/EditProfile">Edytuj profil</a></li>
+                                @if (isAdmin)
+                                {
+                                    <li><a class="dropdown-item" href="/api/stats/export" target="_blank">Pobierz statystyki</a></li>
+                                }
                             </ul>
+
                         </div>
 
                         <p class="navbar-text">Witaj, @displayName!</p>

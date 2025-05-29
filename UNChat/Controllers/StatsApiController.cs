@@ -3,6 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using UNChat.Context;
 using System.Linq;
 using System.Threading.Tasks;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace UNChat.Controllers
 {
@@ -153,5 +158,77 @@ namespace UNChat.Controllers
 
             return Ok(new { averageUsersPerChat = average });
         }
+
+        [HttpGet("export")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> ExportStatsAsPdf()
+        {
+            QuestPDF.Settings.License = LicenseType.Community;
+            var totalMessages = await _context.ChatMessages.CountAsync();
+            var totalChats = await _context.Chats.CountAsync();
+            var totalUsers = await _context.Users.CountAsync();
+
+            var topUser = await _context.ChatMessages
+                .GroupBy(m => m.SenderId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    Count = g.Count()
+                })
+                .OrderByDescending(g => g.Count)
+                .FirstOrDefaultAsync();
+
+            var topUserName = "N/A";
+            if (topUser != null)
+            {
+                var user = await _context.Users.FindAsync(topUser.UserId);
+                topUserName = user?.UserName ?? "Unknown";
+            }
+
+            var mostActiveChat = await _context.ChatMessages
+                .GroupBy(m => m.ChatId)
+                .Select(g => new
+                {
+                    ChatId = g.Key,
+                    Count = g.Count()
+                })
+                .OrderByDescending(g => g.Count)
+                .FirstOrDefaultAsync();
+
+            var mostActiveChatName = "N/A";
+            if (mostActiveChat != null)
+            {
+                var chat = await _context.Chats.FindAsync(mostActiveChat.ChatId);
+                mostActiveChatName = chat?.Name ?? "Unknown";
+            }
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(30);
+                    page.Header().Text("Statystyki UNChat").FontSize(20).Bold();
+                    page.Content().Column(col =>
+                    {
+                        col.Item().Text($"📨 Wiadomości: {totalMessages}");
+                        col.Item().Text($"💬 Czaty: {totalChats}");
+                        col.Item().Text($"👥 Użytkownicy: {totalUsers}");
+                        col.Item().Text($"🏆 Top użytkownik: {topUserName} ({topUser?.Count ?? 0} wiadomości)");
+                        col.Item().Text($"🔥 Najaktywniejszy czat: {mostActiveChatName} ({mostActiveChat?.Count ?? 0} wiadomości)");
+                        col.Spacing(5);
+                    });
+                    page.Footer().AlignCenter().Text(txt =>
+                    {
+                        txt.Span("Wygenerowano: ");
+                        txt.Span(DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm")).SemiBold();
+                    });
+                });
+            });
+
+            var pdfBytes = document.GeneratePdf();
+            return File(pdfBytes, "application/pdf", "Statystyki_UNChat.pdf");
+        }
     }
+
+
 }
