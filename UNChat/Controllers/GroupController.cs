@@ -91,7 +91,10 @@ public class GroupController : ControllerBase
 
         if (userChat == null)
             return NotFound("Nie należysz do tego czatu.");
-
+        if(chat == null)
+        {
+            return NotFound("Grupa nie istnieje");
+        }
         var isAdmin = chat.Participants.Any(p => p.UserId == userId && p.IsAdmin);
 
         // Usuń użytkownika z czatu
@@ -104,7 +107,10 @@ public class GroupController : ControllerBase
             var updatedChat = await _context.Chats
                 .Include(c => c.Participants)
                 .FirstOrDefaultAsync(c => c.Id == chatId);
-
+            if (updatedChat == null) 
+            {
+                return NotFound("Grupa nie istnieje");
+            }
             var otherParticipants = updatedChat.Participants.ToList();
 
             // Sprawdź, czy którykolwiek z pozostałych uczestników jest adminem
