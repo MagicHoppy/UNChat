@@ -64,16 +64,17 @@ public class GroupController : ControllerBase
 
         var groupChats = await _context.UserChats
             .Where(uc => uc.UserId == userId && uc.Chat.IsGroup)
-            .Select(uc => new
+            .Select(uc => new GroupChatResultDto
             {
-                chatId = uc.Chat.Id,
-                chatName = uc.Chat.Name,
-                isAdmin = uc.IsAdmin
+                ChatId = uc.Chat.Id,
+                ChatName = uc.Chat.Name,
+                IsAdmin = uc.IsAdmin
             })
             .ToListAsync();
 
         return Ok(groupChats);
     }
+
 
     [HttpPost("leave-group/{chatId}")]
     [Authorize]

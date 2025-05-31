@@ -13,10 +13,10 @@ using UNChat.Models;
 
 public class GroupControllerTests
 {
-    private UNChatDbContext GetInMemoryDbContext()
+    private UNChatDbContext GetInMemoryDbContext([System.Runtime.CompilerServices.CallerMemberName] string dbName = "")
     {
         var options = new DbContextOptionsBuilder<UNChatDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDb")
+            .UseInMemoryDatabase(databaseName: dbName) // Unique per test
             .Options;
 
         return new UNChatDbContext(options);
@@ -93,6 +93,66 @@ public class GroupControllerTests
 
         // Act
         var result = await controller.CreateGroupChat(dto);
+
+        // Assert
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal("Brak ID użytkownika.", unauthorized.Value);
+    }
+    [Fact]
+    public async Task GetUserGroupChats_ReturnsUserGroups()
+    {
+        var db = GetInMemoryDbContext();
+        var userId = "user1";
+
+        var groupChat = new Chat { Name = "Group A", IsGroup = true };
+        var directChat = new Chat { Name = "Private", IsGroup = false };
+        db.Chats.AddRange(groupChat, directChat);
+        await db.SaveChangesAsync();
+
+        db.UserChats.AddRange(
+            new UserChat { ChatId = groupChat.Id, UserId = userId, IsAdmin = true },
+            new UserChat { ChatId = directChat.Id, UserId = userId, IsAdmin = false }
+        );
+        await db.SaveChangesAsync();
+
+        var controller = new GroupController(db)
+        {
+            ControllerContext = GetControllerContextWithUser(userId)
+        };
+
+        // Act
+        var result = await controller.GetUserGroupChats();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var groupResults = Assert.IsAssignableFrom<List<GroupChatResultDto>>(okResult.Value);
+
+        Assert.Single(groupResults);
+        Assert.Equal(groupChat.Id, groupResults[0].ChatId);
+        Assert.Equal("Group A", groupResults[0].ChatName);
+        Assert.True(groupResults[0].IsAdmin);
+    }
+
+
+    [Fact]
+    public async Task GetUserGroupChats_ReturnsUnauthorized_IfNoUserId()
+    {
+        // Arrange
+        var db = GetInMemoryDbContext();
+
+        var controller = new GroupController(db)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity()) // No claims
+                }
+            }
+        };
+
+        // Act
+        var result = await controller.GetUserGroupChats();
 
         // Assert
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
