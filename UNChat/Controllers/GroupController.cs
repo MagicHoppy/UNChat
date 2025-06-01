@@ -91,50 +91,74 @@ public class GroupController : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == chatId && c.IsGroup);
 
         if (userChat == null)
-            return NotFound("Nie należysz do tego czatu.");
-        if(chat == null)
-        {
-            return NotFound("Grupa nie istnieje");
-        }
+            return NotFound(new LeaveGroupResponseDto { Message = "Nie należysz do tego czatu." });
+
+        if (chat == null)
+            return NotFound(new LeaveGroupResponseDto { Message = "Grupa nie istnieje" });
+
         var isAdmin = chat.Participants.Any(p => p.UserId == userId && p.IsAdmin);
 
         // Usuń użytkownika z czatu
         _context.UserChats.Remove(userChat);
         await _context.SaveChangesAsync();
 
+        // Odśwież dane czatu i uczestników po usunięciu użytkownika
+        var updatedChat = await _context.Chats
+            .Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == chatId);
+
+        if (updatedChat == null)
+            return NotFound(new LeaveGroupResponseDto { Message = "Grupa nie istnieje" });
+
+        var remainingParticipants = updatedChat.Participants.ToList();
+
+        if (!remainingParticipants.Any())
+        {
+            // Usuń wiadomości i załączniki, jeśli potrzebne
+            var messages = await _context.ChatMessages
+                .Where(m => m.ChatId == chatId)
+                .Include(m => m.Attachments)
+                .ToListAsync();
+
+            _context.ChatAttachments.RemoveRange(messages.SelectMany(m => m.Attachments));
+            _context.ChatMessages.RemoveRange(messages);
+            _context.Chats.Remove(updatedChat);
+            await _context.SaveChangesAsync();
+
+            return Ok(new LeaveGroupResponseDto
+            {
+                Message = "Opuściłeś grupę. Grupa została usunięta."
+            });
+        }
+
         if (isAdmin)
         {
-            // Odśwież dane czatu i uczestników po usunięciu użytkownika
-            var updatedChat = await _context.Chats
-                .Include(c => c.Participants)
-                .FirstOrDefaultAsync(c => c.Id == chatId);
-            if (updatedChat == null) 
-            {
-                return NotFound("Grupa nie istnieje");
-            }
-            var otherParticipants = updatedChat.Participants.ToList();
-
-            // Sprawdź, czy którykolwiek z pozostałych uczestników jest adminem
-            bool hasOtherAdmins = otherParticipants.Any(p => p.IsAdmin);
-
-            // Jeśli nie ma żadnych adminów, wylosuj nowego
-            if (!hasOtherAdmins && otherParticipants.Any())
+            bool hasOtherAdmins = remainingParticipants.Any(p => p.IsAdmin);
+            if (!hasOtherAdmins)
             {
                 var random = new Random();
-                var randomParticipant = otherParticipants[random.Next(otherParticipants.Count)];
+                var randomParticipant = remainingParticipants[random.Next(remainingParticipants.Count)];
                 randomParticipant.IsAdmin = true;
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Opuściłeś grupę jako administrator. Nowy administrator został wybrany." });
+                return Ok(new LeaveGroupResponseDto
+                {
+                    Message = "Opuściłeś grupę jako administrator. Nowy administrator został wybrany."
+                });
             }
 
-            return Ok(new { message = "Opuściłeś grupę jako administrator." });
+            return Ok(new LeaveGroupResponseDto
+            {
+                Message = "Opuściłeś grupę jako administrator."
+            });
         }
-        else
+
+        return Ok(new LeaveGroupResponseDto
         {
-            return Ok(new { message = "Opuściłeś grupę." });
-        }
+            Message = "Opuściłeś grupę."
+        });
     }
+
 
 
     [HttpDelete("delete-group/{chatId}")]
@@ -178,15 +202,16 @@ public class GroupController : ControllerBase
     {
         var members = await _context.UserChats
             .Where(uc => uc.ChatId == chatId)
-            .Select(uc => new
+            .Select(uc => new ChatMemberDto
             {
-                userId = uc.UserId,
-                name = uc.User.Name,
-                isAdmin = uc.IsAdmin
+                UserId = uc.UserId,
+                Name = uc.User.Name,
+                IsAdmin = uc.IsAdmin
             }).ToListAsync();
 
         return Ok(members);
     }
+
 
     [HttpPost("remove-member")]
     [Authorize]
@@ -201,14 +226,16 @@ public class GroupController : ControllerBase
             return NotFound("Czat nie istnieje.");
 
         if (!chat.Participants.Any(p => p.UserId == userId && p.IsAdmin))
-            return Forbid("Brak uprawnień.");
+            return StatusCode(StatusCodes.Status403Forbidden, "Brak uprawnień.");
 
         var member = chat.Participants.FirstOrDefault(p => p.UserId == dto.UserId);
-        if (member != null)
+        if (member == null)
         {
-            _context.UserChats.Remove(member);
-            await _context.SaveChangesAsync();
+            return NotFound("Użytkownik nie jest członkiem grupy.");
         }
+
+        _context.UserChats.Remove(member);
+        await _context.SaveChangesAsync();
 
         return Ok();
     }
@@ -226,14 +253,14 @@ public class GroupController : ControllerBase
             return NotFound("Czat nie istnieje.");
 
         if (!chat.Participants.Any(p => p.UserId == userId && p.IsAdmin))
-            return Forbid("Brak uprawnień.");
+            return StatusCode(StatusCodes.Status403Forbidden, "Brak uprawnień.");
 
         var member = chat.Participants.FirstOrDefault(p => p.UserId == dto.UserId);
-        if (member != null)
-        {
-            member.IsAdmin = true;
-            await _context.SaveChangesAsync();
-        }
+        if (member == null)
+            return NotFound("Użytkownik nie jest członkiem grupy.");
+
+        member.IsAdmin = true;
+        await _context.SaveChangesAsync();
 
         return Ok();
     }
