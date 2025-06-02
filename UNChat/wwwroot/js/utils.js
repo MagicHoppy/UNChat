@@ -281,13 +281,22 @@ export async function addMessage(type, message, time = null, messageId = null, s
 
     const extension = message.split(".").pop().toLowerCase();
 
-    if (message.startsWith("/uploads/") && ["gif", "jpg", "jpeg", "png"].includes(extension)) {
+    if ((message.startsWith("/uploads/") && ["gif", "jpg", "jpeg", "png"].includes(extension))) {
+        console.log("gif")
         const img = document.createElement("img");
         img.src = message;
         img.className = "img-fluid rounded";
         img.style.maxWidth = "200px";
         messageElement.appendChild(img);
     }
+    else if (message.startsWith("http") && message.endsWith(".gif")) {
+        const img = document.createElement("img");
+        img.src = message;
+        img.className = "img-fluid rounded";
+        img.style.maxWidth = "200px";
+        messageElement.appendChild(img);
+    }
+
     else if (message.startsWith("/uploads/") && extension === "mp4") {
         const vid = document.createElement("video");
         vid.controls = true;

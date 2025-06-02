@@ -185,3 +185,166 @@ input, .form-control {
     font-size: 1.25rem;
     font-weight: bold;
 }
+
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+    body.dark-mode .bg-light {
+        background-color: #1f1f2e !important;
+    }
+
+    body.dark-mode .border,
+    body.dark-mode .modal-content {
+        border-color: #3a3a4d !important;
+        background-color: #1f1f2e !important;
+        color: #e0e0e0 !important;
+    }
+
+    body.dark-mode .form-control,
+    body.dark-mode .list-group-item {
+        background-color: #2c2c3a !important;
+        color: #ffffff !important;
+        border-color: #4c4c5e !important;
+    }
+
+    body.dark-mode .btn {
+        border-color: transparent !important;
+    }
+
+    body.dark-mode .btn-primary {
+        background-color: #4a90e2 !important;
+        color: #fff;
+    }
+
+    body.dark-mode .btn-warning {
+        background-color: #f0ad4e !important;
+        color: #000;
+    }
+
+    body.dark-mode .btn-light {
+        background-color: #3a3a4a !important;
+        color: #f1f1f1 !important;
+    }
+
+    body.dark-mode .btn-success {
+        background-color: #28a745 !important;
+    }
+
+    body.dark-mode .btn-secondary {
+        background-color: #6c757d !important;
+    }
+
+    body.dark-mode .btn-danger {
+        background-color: #dc3545 !important;
+    }
+
+    body.dark-mode .btn-info {
+        background-color: #17a2b8 !important;
+    }
+    body.dark-mode .message.sent {
+        background-color: #235c3f; /* deep teal-green */
+        color: #d6f5e3;
+    }
+
+    body.dark-mode .message.received {
+        background-color: #2d2d3a; /* dark grayish purple */
+        color: #e2e2f1;
+    }
+
+
+    body.dark-mode #messages,
+    body.dark-mode #chatBox,
+    body.dark-mode #gifResults,
+    body.dark-mode #groupChatForm,
+    body.dark-mode .emoji-container {
+        background-color: #2c2c3a;
+        color: #f1f1f1;
+        border-color: #444;
+    }
+
+    body.dark-mode .emoji {
+        filter: brightness(1.2);
+    }
+
+    body.dark-mode .modal-header,
+    body.dark-mode .modal-footer {
+        background-color: #232333;
+        border-bottom: 1px solid #444;
+        border-top: 1px solid #444;
+    }
+
+    body.dark-mode input::placeholder,
+    body.dark-mode textarea::placeholder {
+        color: #aaa;
+    }
+
+    body.dark-mode .navbar {
+        background-color: #1c1c2b !important;
+        border-bottom: 1px solid #3a3a4d !important;
+        color: #f1f1f1;
+    }
+
+        body.dark-mode .navbar .navbar-brand,
+        body.dark-mode .navbar .nav-link,
+        body.dark-mode .navbar .navbar-text {
+            color: #f1f1f1 !important;
+        }
+
+        body.dark-mode .navbar .btn,
+        body.dark-mode .dropdown-menu {
+            background-color: #2c2c3a !important;
+            color: #f1f1f1 !important;
+            border-color: #444 !important;
+        }
+
+            body.dark-mode .dropdown-menu .dropdown-item,
+            body.dark-mode .dropdown-menu .dropdown-item-text {
+                background-color: transparent;
+                color: #e0e0e0 !important;
+            }
+
+    body.dark-mode .dropdown-divider {
+        border-color: #555;
+    }
+
+    body.dark-mode .navbar-toggler {
+        border-color: #666;
+    }
+
+    body.dark-mode .navbar-toggler-icon {
+        filter: invert(100%);
+    }
+
+    body.dark-mode h2,
+    body.dark-mode label,
+    body.dark-mode .form-label {
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .form-control {
+        background-color: #2a2a2a;
+        color: #f1f1f1;
+        border: 1px solid #444;
+    }
+
+        body.dark-mode .form-control::placeholder {
+            color: #bbb;
+        }
+
+    body.dark-mode .btn-primary {
+        background-color: #0062cc;
+        border-color: #005cbf;
+        color: #fff;
+    }
+
+    body.dark-mode .alert-success {
+        background-color: #234d20;
+        border-color: #1b3e17;
+        color: #d4fcd4;
+    }
+
+    body.dark-mode .text-danger {
+        color: #ff6b6b;
+    }
