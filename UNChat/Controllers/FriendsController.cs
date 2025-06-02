@@ -82,6 +82,9 @@ namespace UNChat.Controllers
 
             friendship.Status = FriendStatus.Accepted;
             await _context.SaveChangesAsync();
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+            await hubContext.Clients.User(model.Friend1Id).SendAsync("FriendAdded", model.Friend2Id);
+            await hubContext.Clients.User(model.Friend2Id).SendAsync("FriendAdded", model.Friend1Id);
 
 
             return Ok("Zaproszenie zaakceptowane.");

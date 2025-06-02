@@ -54,21 +54,42 @@ public class ChatApiController : ControllerBase
 
         if (file != null && file.Length > 0)
         {
-            var uploadsFolder = Path.Combine("wwwroot", "uploads");
-            Directory.CreateDirectory(uploadsFolder);
+            var mediaExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mp3" };
+            var docExtensions = new[] { ".pdf", ".txt", ".zip", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".json", ".log", ".md" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-            var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            if (!mediaExtensions.Contains(ext) && !docExtensions.Contains(ext))
+                return BadRequest("File type not allowed.");
+
+            var originalFileName = Path.GetFileName(file.FileName);
+            var uniqueFileName = $"{Guid.NewGuid()}_{originalFileName}";
+            string filePath;
+
+            if (mediaExtensions.Contains(ext))
+            {
+                // Store in wwwroot/uploads (public renderable media)
+                var uploadsFolder = Path.Combine("wwwroot", "uploads");
+                Directory.CreateDirectory(uploadsFolder);
+                filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                fileUrl = $"/uploads/{uniqueFileName}";
+            }
+            else
+            {
+                // Store outside wwwroot, serve via /download
+                var secureFolder = Path.Combine("UploadsSecure");
+                Directory.CreateDirectory(secureFolder);
+                filePath = Path.Combine(secureFolder, uniqueFileName);
+                fileUrl = $"/download/{uniqueFileName}";
+            }
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            fileUrl = $"/uploads/{uniqueFileName}";
             chatMessage.Attachments.Add(new ChatAttachment
             {
-                FileName = file.FileName,
+                FileName = originalFileName,
                 FilePath = fileUrl
             });
         }
@@ -149,6 +170,26 @@ public class ChatApiController : ControllerBase
             id = chatMessage.Id,
             senderName = sender.Name
         });
+    }
+    [HttpGet("/download/{filename}")]
+    public async Task<IActionResult> Download(string filename)
+    {
+        var ext = Path.GetExtension(filename).ToLowerInvariant();
+        var allowed = new[] { ".pdf", ".txt", ".zip", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".json", ".log", ".md" };
+
+        if (!allowed.Contains(ext) || filename.Contains(".."))
+            return Forbid();
+
+        var path = Path.Combine("UploadsSecure", filename);
+        if (!System.IO.File.Exists(path))
+            return NotFound();
+
+        var memory = new MemoryStream();
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            await stream.CopyToAsync(memory);
+
+        memory.Position = 0;
+        return File(memory, "application/octet-stream", filename);
     }
 
     [HttpDelete("remove/{messageId}")]

@@ -279,15 +279,16 @@ export async function addMessage(type, message, time = null, messageId = null, s
     const messageElement = document.createElement("div");
     messageElement.className = `message ${type} p-2 rounded position-relative`;
 
-    // Detect content type
-    if ((message.startsWith("/uploads/") || message.startsWith("http")) && (message.endsWith(".gif") || message.endsWith(".jpg") || message.endsWith(".png"))) {
+    const extension = message.split(".").pop().toLowerCase();
+
+    if (message.startsWith("/uploads/") && ["gif", "jpg", "jpeg", "png"].includes(extension)) {
         const img = document.createElement("img");
         img.src = message;
         img.className = "img-fluid rounded";
         img.style.maxWidth = "200px";
         messageElement.appendChild(img);
     }
-    else if (message.startsWith("/uploads/") && message.endsWith(".mp4")) {
+    else if (message.startsWith("/uploads/") && extension === "mp4") {
         const vid = document.createElement("video");
         vid.controls = true;
         vid.className = "w-100 rounded";
@@ -297,7 +298,7 @@ export async function addMessage(type, message, time = null, messageId = null, s
         vid.appendChild(source);
         messageElement.appendChild(vid);
     }
-    else if (message.startsWith("/uploads/") && message.endsWith(".mp3")) {
+    else if (message.startsWith("/uploads/") && extension === "mp3") {
         const audio = document.createElement("audio");
         audio.controls = true;
         const source = document.createElement("source");
@@ -306,11 +307,11 @@ export async function addMessage(type, message, time = null, messageId = null, s
         audio.appendChild(source);
         messageElement.appendChild(audio);
     }
-    else if (message.startsWith("/uploads/") && /\.(pdf|txt|zip|docx?|xlsx?)$/i.test(message)) {
+    else if (message.startsWith("/download/")) {
         const link = document.createElement("a");
-        link.href = message;
         const fullFileName = message.split("/").pop();
         const cleanFileName = fullFileName.split("_").slice(1).join("_");
+        link.href = message;
         link.textContent = `Załącznik: ${cleanFileName}`;
         link.download = cleanFileName;
         link.target = "_blank";

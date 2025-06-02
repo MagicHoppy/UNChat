@@ -19,8 +19,11 @@ export async function loadFriendRequests() {
         name.textContent = request.name;
 
         const acceptButton = document.createElement("button");
-        acceptButton.textContent = "✅";
+        acceptButton.innerHTML = '<i class="bi bi-check-lg"></i>';
+        acceptButton.className = "btn btn-outline-success btn-sm p-1 me-1";
         acceptButton.title = "Akceptuj";
+        acceptButton.style.width = "30px";
+        acceptButton.style.height = "30px";
         acceptButton.addEventListener("click", async () => {
             await fetch("/api/friends/accept", {
                 method: "POST",
@@ -33,8 +36,11 @@ export async function loadFriendRequests() {
         });
 
         const denyButton = document.createElement("button");
-        denyButton.textContent = "X";
-        denyButton.title = "Odrzuc";
+        denyButton.innerHTML = '<i class="bi bi-x-lg"></i>';
+        denyButton.className = "btn btn-outline-danger btn-sm p-1";
+        denyButton.title = "Odrzuć";
+        denyButton.style.width = "30px";
+        denyButton.style.height = "30px";
         denyButton.addEventListener("click", async () => {
             await fetch("/api/friends/deny", {
                 method: "POST",
