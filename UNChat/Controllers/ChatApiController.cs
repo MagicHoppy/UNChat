@@ -164,7 +164,7 @@ public class ChatApiController : ControllerBase
 
         return Ok(new
         {
-            message,
+            message = chatMessage.Message,
             attachmentUrl = fileUrl,
             timestamp = chatMessage.Timestamp,
             id = chatMessage.Id,
