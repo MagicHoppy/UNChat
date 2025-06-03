@@ -29,7 +29,11 @@ export async function loadFriends() {
         `;
         return;
     }
-
+    friends.sort((a, b) => {
+        const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+        const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+        return bTime - aTime;
+    });
     friends.forEach(friend => {
         const listItem = document.createElement("li");
         listItem.className = "list-group-item d-flex justify-content-between align-items-center";
@@ -273,7 +277,11 @@ export async function loadGroupChats() {
         groupChatsList.innerHTML = `<div class="alert alert-info">Brak czatów grupowych.</div>`;
         return;
     }
-
+    groupChats.sort((a, b) => {
+        const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+        const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+        return bTime - aTime;
+    });
     groupChats.forEach(chat => {
         const listItem = document.createElement("li");
         listItem.className = "list-group-item d-flex justify-content-between align-items-center flex-wrap";

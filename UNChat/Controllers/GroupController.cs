@@ -62,17 +62,46 @@ public class GroupController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("Brak ID użytkownika.");
 
+        // Pobierz czaty grupowe użytkownika
         var groupChats = await _context.UserChats
             .Where(uc => uc.UserId == userId && uc.Chat.IsGroup)
-            .Select(uc => new GroupChatResultDto
+            .Select(uc => new
             {
-                ChatId = uc.Chat.Id,
-                ChatName = uc.Chat.Name,
-                IsAdmin = uc.IsAdmin
+                uc.Chat.Id,
+                uc.Chat.Name,
+                uc.IsAdmin
             })
             .ToListAsync();
 
-        return Ok(groupChats);
+        var groupChatIds = groupChats.Select(g => g.Id).ToList();
+
+        // Pobierz ostatnie wiadomości dla tych czatów
+        var lastMessages = await _context.ChatMessages
+            .Where(m => groupChatIds.Contains(m.ChatId))
+            .GroupBy(m => m.ChatId)
+            .Select(g => new
+            {
+                ChatId = g.Key,
+                LastMessageTime = g.Max(m => m.Timestamp)
+            })
+            .ToListAsync();
+
+        // Zbuduj wynik z LastMessageTime
+        var result = groupChats.Select(g =>
+        {
+            var lastMsg = lastMessages.FirstOrDefault(lm => lm.ChatId == g.Id);
+            DateTime? lastMessageTime = lastMsg?.LastMessageTime;
+
+            return new
+            {
+                ChatId = g.Id,
+                ChatName = g.Name,
+                IsAdmin = g.IsAdmin,
+                LastMessageTime = lastMessageTime
+            };
+        });
+
+        return Ok(result);
     }
 
 

@@ -135,7 +135,7 @@ namespace UNChat.Controllers
         [HttpGet("/api/friends/{userId}")]
         public async Task<IActionResult> GetFriends(string userId)
         {
-            // Krok 1: Pobierz przyjaciół
+            // Pobierz przyjaciół
             var friends = await _context.Friends
                 .Where(f => (f.Friend1Id == userId || f.Friend2Id == userId) && f.Status == FriendStatus.Accepted)
                 .ToListAsync();
@@ -147,12 +147,12 @@ namespace UNChat.Controllers
             var now = DateTime.UtcNow;
             var onlineThreshold = TimeSpan.FromMinutes(10);
 
-            // Krok 2: Pobierz dane użytkowników
+            // Pobierz dane użytkowników
             var users = await _context.Users
                 .Where(u => friendIds.Contains(u.Id))
                 .ToListAsync();
 
-            // Krok 3: Pobierz wszystkie czaty użytkownika (userId), które nie są grupowe
+            // Pobierz wszystkie czaty użytkownika (userId), które nie są grupowe
             var privateChats = await _context.UserChats
                 .Include(uc => uc.Chat)
                     .ThenInclude(c => c.Participants)
@@ -164,13 +164,29 @@ namespace UNChat.Controllers
                 })
                 .ToListAsync();
 
-            // Krok 4: Zbuduj wynik
+            // Pobierz ostatnie wiadomości dla wszystkich czatów
+            var chatIds = privateChats.Select(pc => pc.ChatId).ToList();
+            var lastMessages = await _context.ChatMessages
+                .Where(m => chatIds.Contains(m.ChatId))
+                .GroupBy(m => m.ChatId)
+                .Select(g => new
+                {
+                    ChatId = g.Key,
+                    LastMessageTime = g.Max(m => m.Timestamp)
+                })
+                .ToListAsync();
+
+            // Zbuduj wynik
             var result = users.Select(friend =>
             {
-                // Znajdź czat 1-na-1 pomiędzy userId i friend.Id
-                var chatId = privateChats
-                    .FirstOrDefault(pc => pc.Chat.Participants.Any(p => p.UserId == friend.Id))
-                    ?.ChatId;
+                var chat = privateChats
+                    .FirstOrDefault(pc => pc.Chat.Participants.Any(p => p.UserId == friend.Id));
+
+                var chatId = chat?.ChatId;
+
+                // Znajdź czas ostatniej wiadomości dla tego czatu
+                var lastMsg = lastMessages.FirstOrDefault(lm => lm.ChatId == chatId);
+                DateTime? lastMessageTime = lastMsg?.LastMessageTime;
 
                 return new
                 {
@@ -178,7 +194,8 @@ namespace UNChat.Controllers
                     friend.Name,
                     IsOnline = friend.IsOnline && friend.LastOnline >= now - onlineThreshold,
                     LastOnline = friend.LastOnline,
-                    ChatId = chatId
+                    ChatId = chatId,
+                    LastMessageTime = lastMessageTime
                 };
             });
 
