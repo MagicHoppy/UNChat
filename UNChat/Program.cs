@@ -62,6 +62,15 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
 builder.Services.AddScoped<UserManager<User>>();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "UNChat API", Version = "v1" });
+});
+
+
+
+
 var app = builder.Build();
 
 // Database Initialization
@@ -77,6 +86,8 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.Use(async (context, next) =>
     {
         context.Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -88,6 +99,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }

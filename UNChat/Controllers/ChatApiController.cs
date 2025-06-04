@@ -24,50 +24,49 @@ public class ChatApiController : ControllerBase
     }
 
     [HttpPost("send")]
-    public async Task<IActionResult> Send([FromForm] string senderId, [FromForm] string chatId, [FromForm] string? message, [FromForm] IFormFile? file)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Send([FromForm] SendMessageRequest request)
     {
         var chat = await _context.Chats
             .Include(c => c.Participants)
-            .FirstOrDefaultAsync(c => c.Id == chatId);
+            .FirstOrDefaultAsync(c => c.Id == request.ChatId);
 
         if (chat == null)
         {
-            Console.WriteLine($"Sender: {senderId}, ChatId: {chatId}, Message: {message}, File: {file?.FileName}");
+            Console.WriteLine($"Sender: {request.SenderId}, ChatId: {request.ChatId}, Message: {request.Message}, File: {request.File?.FileName}");
             return NotFound("Chat not found.");
         }
 
-        // Sprawdź czy nadawca jest uczestnikiem czatu
-        if (!chat.Participants.Any(p => p.UserId == senderId))
+        if (!chat.Participants.Any(p => p.UserId == request.SenderId))
         {
             return Forbid("You are not a participant of this chat");
         }
 
         var chatMessage = new ChatMessage
         {
-            SenderId = senderId,
-            ChatId = chatId,
-            Message = message ?? string.Empty,
+            SenderId = request.SenderId,
+            ChatId = request.ChatId,
+            Message = request.Message ?? string.Empty,
             Timestamp = DateTime.UtcNow
         };
 
         string? fileUrl = null;
 
-        if (file != null && file.Length > 0)
+        if (request.File != null && request.File.Length > 0)
         {
             var mediaExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mp3" };
             var docExtensions = new[] { ".pdf", ".txt", ".zip", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".json", ".log", ".md" };
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var ext = Path.GetExtension(request.File.FileName).ToLowerInvariant();
 
             if (!mediaExtensions.Contains(ext) && !docExtensions.Contains(ext))
                 return BadRequest("File type not allowed.");
 
-            var originalFileName = Path.GetFileName(file.FileName);
+            var originalFileName = Path.GetFileName(request.File.FileName);
             var uniqueFileName = $"{Guid.NewGuid()}_{originalFileName}";
             string filePath;
 
             if (mediaExtensions.Contains(ext))
             {
-                // Store in wwwroot/uploads (public renderable media)
                 var uploadsFolder = Path.Combine("wwwroot", "uploads");
                 Directory.CreateDirectory(uploadsFolder);
                 filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -75,7 +74,6 @@ public class ChatApiController : ControllerBase
             }
             else
             {
-                // Store outside wwwroot, serve via /download
                 var secureFolder = Path.Combine("UploadsSecure");
                 Directory.CreateDirectory(secureFolder);
                 filePath = Path.Combine(secureFolder, uniqueFileName);
@@ -84,7 +82,7 @@ public class ChatApiController : ControllerBase
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                await file.CopyToAsync(stream);
+                await request.File.CopyToAsync(stream);
             }
 
             chatMessage.Attachments.Add(new ChatAttachment
@@ -96,7 +94,7 @@ public class ChatApiController : ControllerBase
 
         _context.ChatMessages.Add(chatMessage);
 
-        var user = await _context.Users.FindAsync(senderId);
+        var user = await _context.Users.FindAsync(request.SenderId);
         if (user != null)
         {
             user.IsOnline = true;
@@ -104,31 +102,29 @@ public class ChatApiController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        var sender = await _context.Users.FindAsync(senderId);
-        // Wykryj wzmianki @nazwaUzytkownika
+        var sender = await _context.Users.FindAsync(request.SenderId);
 
         var mentionedUsers = new List<User>();
-        if (!string.IsNullOrEmpty(message))
+        if (!string.IsNullOrEmpty(request.Message))
         {
             var allUsers = await _context.Users.ToListAsync();
             foreach (var userr in allUsers)
             {
-                if (!string.IsNullOrEmpty(userr.Name) && message.Contains($"@{userr.Name}", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(userr.Name) && request.Message.Contains($"@{userr.Name}", StringComparison.OrdinalIgnoreCase))
                 {
                     mentionedUsers.Add(userr);
                 }
             }
         }
 
-        // Wyślij powiadomienia do wzmiankowanych użytkowników
         var chatHub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
 
         foreach (var mentionedUser in mentionedUsers)
         {
-            if (mentionedUser.Id != senderId)
+            if (mentionedUser.Id != request.SenderId)
             {
-                // ✅ Check if the mentioned user is still in the chat
                 bool isParticipant = chat.Participants.Any(p => p.UserId == mentionedUser.Id);
                 if (!isParticipant)
                     continue;
@@ -137,28 +133,21 @@ public class ChatApiController : ControllerBase
                     .SendAsync("MentionNotification", new
                     {
                         from = sender.Name,
-                        senderId,
-                        chatId,
+                        senderId = request.SenderId,
+                        chatId = request.ChatId,
                         chatName = chat.Name,
-                        message,
+                        message = request.Message,
                         timestamp = chatMessage.Timestamp
                     });
             }
         }
 
-
-
-        // Wysyłaj tylko do uczestników tego konkretnego czatu
-        // await hub.Clients.Group(chatId)
-        //.SendAsync("ReceiveMessage", senderId, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
-
-
         foreach (var participant in chat.Participants)
         {
-            if (participant.UserId != senderId)
+            if (participant.UserId != request.SenderId)
             {
                 await hub.Clients.User(participant.UserId)
-                    .SendAsync("ReceiveMessage", senderId, sender.Name, message, fileUrl, chatMessage.Timestamp, chatMessage.Id, chatId);
+                    .SendAsync("ReceiveMessage", request.SenderId, sender.Name, request.Message, fileUrl, chatMessage.Timestamp, chatMessage.Id, request.ChatId);
             }
         }
 
@@ -171,6 +160,7 @@ public class ChatApiController : ControllerBase
             senderName = sender.Name
         });
     }
+
     [HttpGet("/download/{filename}")]
     public async Task<IActionResult> Download(string filename)
     {

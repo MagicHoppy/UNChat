@@ -1,4 +1,6 @@
-﻿namespace UNChat.Models
+﻿using Microsoft.Build.Framework;
+
+namespace UNChat.Models
 {
     public class ChatMessage
     {
@@ -37,6 +39,22 @@
 
         public string UserId { get; set; }
         public DateTime ReadAt { get; set; }
+    }
+    public class SendMessageRequest
+    {
+        /// <summary>Id użytkownika wysyłającego wiadomość</summary>
+        [Required]
+        public string SenderId { get; set; }
+
+        /// <summary>Id czatu</summary>
+        [Required]
+        public string ChatId { get; set; }
+
+        /// <summary>Treść wiadomości (opcjonalna)</summary>
+        public string? Message { get; set; }
+
+        /// <summary>Załącznik (np. plik JPG, PDF, itd.)</summary>
+        public IFormFile? File { get; set; }
     }
 
 }
