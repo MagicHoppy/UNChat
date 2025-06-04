@@ -22,54 +22,9 @@
         <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
     </form>
 </div>
-<style>
-    body.dark-mode {
-        background-color: #1e1e1e;
-        color: #f1f1f1;
-    }
 
-        body.dark-mode .form-control {
-            background-color: #2a2a2a;
-            color: #f1f1f1;
-            border: 1px solid #444;
-        }
-
-        body.dark-mode .form-label,
-        body.dark-mode label,
-        body.dark-mode h2 {
-            color: #f1f1f1;
-        }
-
-        /* Add styles for the navbar */
-        body.dark-mode .navbar,
-        body.dark-mode .navbar-nav,
-        body.dark-mode .navbar-brand,
-        body.dark-mode .nav-link {
-            background-color: #2a2a2a !important;
-            color: #f1f1f1 !important;
-        }
-
-            body.dark-mode .nav-link:hover {
-                color: #ffffff !important;
-            }
-</style>
-
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const toggleBtn = document.getElementById('toggleDarkMode');
-
-        // Load preference
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
-        }
-
-        toggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-        });
-    });
-</script>
 @section Scripts {
+    <link href="~/css/chat.css" rel="stylesheet" />
+    <script type="module" src="~/js/darkmode.js?v=@DateTime.UtcNow.Ticks"></script>
     <partial name="_ValidationScriptsPartial" />
 }
