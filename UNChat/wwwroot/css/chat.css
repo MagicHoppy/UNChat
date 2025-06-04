@@ -348,3 +348,6 @@ body.dark-mode {
     body.dark-mode .text-danger {
         color: #ff6b6b;
     }
+    body.dark-mode .message-meta{
+        color: aliceblue !important;
+    }
