@@ -16,12 +16,16 @@ namespace UNChat.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly UNChatDbContext _context;
+        private readonly JwtTokenService _jwtTokenService;
 
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, UNChatDbContext context)
+
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, UNChatDbContext context, JwtTokenService jwtTokenService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _jwtTokenService = jwtTokenService; 
+
         }
 
         [HttpGet]
@@ -170,19 +174,16 @@ namespace UNChat.Controllers
         public async Task<IActionResult> EditProfile()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
             var model = new EditProfileViewModel
             {
-                Name = user.Name
+                Name = user.Name,
+                ApiKey = user.ApiKey
             };
 
             return View(model);
         }
-
         // POST: /Account/EditProfile
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -215,6 +216,22 @@ namespace UNChat.Controllers
 
             return View(model);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateApiKey()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var token = _jwtTokenService.GenerateToken(user);
+            user.ApiKey = token;
+
+            await _userManager.UpdateAsync(user);
+
+            TempData["SuccessMessage"] = "Wygenerowano nowy klucz API.";
+            return RedirectToAction("EditProfile");
+        }
+
     }
 
 }

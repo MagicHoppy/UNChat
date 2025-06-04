@@ -21,6 +21,28 @@
 
         <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
     </form>
+    <hr />
+    <h4>Klucz API</h4>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        if (Model.ApiKey != null)
+        {
+            <div class="mb-2">
+                <code>@Model.ApiKey</code>
+            </div>
+            <form asp-action="GenerateApiKey" method="post">
+                <button type="submit" class="btn btn-warning">Wygeneruj ponownie</button>
+            </form>
+        }
+        else
+        {
+            <form asp-action="GenerateApiKey" method="post">
+                <button type="submit" class="btn btn-success">Wygeneruj klucz API</button>
+            </form>
+        }
+    }
+
 </div>
 
 @section Scripts {

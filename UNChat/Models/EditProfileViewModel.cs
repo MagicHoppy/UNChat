@@ -8,5 +8,7 @@ namespace UNChat.Models
         [StringLength(100, ErrorMessage = "Imię nie może mieć więcej niż 100 znaków.")]
         [Display(Name = "Imię")]
         public string Name { get; set; }
+        public string? ApiKey { get; set; } 
+
     }
 }

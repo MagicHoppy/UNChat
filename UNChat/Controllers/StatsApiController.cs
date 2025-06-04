@@ -7,6 +7,13 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using UNChat.Models;
+using Microsoft.AspNetCore.Mvc.Filters;
+using static JwtTokenService;
 
 
 namespace UNChat.Controllers
@@ -23,6 +30,7 @@ namespace UNChat.Controllers
         }
 
         [HttpGet("totals")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetTotals()
         {
             var totalMessages = await _context.ChatMessages.CountAsync();
@@ -38,6 +46,7 @@ namespace UNChat.Controllers
         }
 
         [HttpGet("top-user")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetTopUser()
         {
             var topUser = await _context.ChatMessages
@@ -64,6 +73,7 @@ namespace UNChat.Controllers
         }
 
         [HttpGet("messages-last-7-days")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetMessagesLast7Days()
         {
             var dateLimit = DateTime.UtcNow.AddDays(-7);
@@ -84,6 +94,7 @@ namespace UNChat.Controllers
 
         // GET: api/statsapi/most-active-chat
         [HttpGet("most-active-chat")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetMostActiveChat()
         {
             var chat = await _context.ChatMessages
@@ -111,6 +122,7 @@ namespace UNChat.Controllers
 
         // GET: api/statsapi/top-emojis
         [HttpGet("top-emojis")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetTopEmojis()
         {
             var emojis = await _context.MessageReactions
@@ -137,6 +149,7 @@ namespace UNChat.Controllers
 
         // GET: api/statsapi/average-messages-per-user
         [HttpGet("average-messages-per-user")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetAverageMessagesPerUser()
         {
             var totalMessages = await _context.ChatMessages.CountAsync();
@@ -149,6 +162,7 @@ namespace UNChat.Controllers
 
         // GET: api/statsapi/average-users-per-chat
         [HttpGet("average-users-per-chat")]
+        [ServiceFilter(typeof(ApiKeyAuthFilter))]
         public async Task<IActionResult> GetAverageUsersPerChat()
         {
             var totalUserChats = await _context.UserChats.CountAsync();
@@ -230,5 +244,65 @@ namespace UNChat.Controllers
         }
     }
 
+
+}
+public class JwtTokenService
+{
+    private readonly IConfiguration _config;
+
+    public JwtTokenService(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    public string GenerateToken(User user)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName),
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddYears(1),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    public class ApiKeyAuthFilter : IAuthorizationFilter
+    {
+        private readonly UNChatDbContext _context;
+
+        public ApiKeyAuthFilter(UNChatDbContext context)
+        {
+            _context = context;
+        }
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            var authHeader = context.HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+
+            if (authHeader == null || !authHeader.StartsWith("Bearer "))
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+
+            var token = authHeader.Substring("Bearer ".Length);
+
+            var user = _context.Users.FirstOrDefault(u => u.ApiKey == token);
+            if (user == null)
+            {
+                context.Result = new UnauthorizedResult();
+            }
+        }
+    }
 
 }

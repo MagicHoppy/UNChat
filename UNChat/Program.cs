@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using UNChat.Context;
 using UNChat.Hubs;
 using UNChat.Models;
+using static JwtTokenService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,8 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "UNChat API", Version = "v1" });
 });
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<ApiKeyAuthFilter>();
 
 
 

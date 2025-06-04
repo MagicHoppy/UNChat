@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNChat.Migrations
 {
     /// <inheritdoc />
-    public partial class statystyki : Migration
+    public partial class klucz_api : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,6 +33,7 @@ namespace UNChat.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsOnline = table.Column<bool>(type: "bit", nullable: false),
                     LastOnline = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ApiKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
