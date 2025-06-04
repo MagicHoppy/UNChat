@@ -40,20 +40,21 @@ namespace UNChat.Models
         public string UserId { get; set; }
         public DateTime ReadAt { get; set; }
     }
+
     public class SendMessageRequest
     {
-        /// <summary>Id użytkownika wysyłającego wiadomość</summary>
+        /// <summary>User id</summary>
         [Required]
         public string SenderId { get; set; }
 
-        /// <summary>Id czatu</summary>
+        /// <summary>Chat Id</summary>
         [Required]
         public string ChatId { get; set; }
 
-        /// <summary>Treść wiadomości (opcjonalna)</summary>
+        /// <summary>Message text content (optional)</summary>
         public string? Message { get; set; }
 
-        /// <summary>Załącznik (np. plik JPG, PDF, itd.)</summary>
+        /// <summary>Attachment (eg. plik JPG, PDF, etc.) (optional)</summary>
         public IFormFile? File { get; set; }
     }
 

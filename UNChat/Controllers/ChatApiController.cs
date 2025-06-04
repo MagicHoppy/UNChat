@@ -11,6 +11,7 @@ using UNChat.Hubs;
 using UNChat.DTOs;
 using System.Security.Claims;
 using System.IO;
+using Swashbuckle.AspNetCore.Annotations;
 
 [Route("api/chat")]
 [ApiController]
@@ -22,9 +23,17 @@ public class ChatApiController : ControllerBase
     {
         _context = context;
     }
-
     [HttpPost("send")]
     [Consumes("multipart/form-data")]
+    [SwaggerOperation(
+        Summary = "Sends a chat message",
+        Description = "Sends a message to a chat, with optional file attachment and @mention support.",
+        OperationId = "SendChatMessage"
+    )]
+    [SwaggerResponse(StatusCodes.Status200OK, "Message sent successfully")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "User not a participant of the chat")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Chat not found")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid file type")]
     public async Task<IActionResult> Send([FromForm] SendMessageRequest request)
     {
         var chat = await _context.Chats
@@ -162,6 +171,10 @@ public class ChatApiController : ControllerBase
     }
 
     [HttpGet("/download/{filename}")]
+    [SwaggerOperation(Summary = "Download file", Description = "Download a secure file by filename")]
+    [SwaggerResponse(200, "File downloaded")]
+    [SwaggerResponse(403, "Forbidden")]
+    [SwaggerResponse(404, "File not found")]
     public async Task<IActionResult> Download(string filename)
     {
         var ext = Path.GetExtension(filename).ToLowerInvariant();
@@ -181,9 +194,12 @@ public class ChatApiController : ControllerBase
         memory.Position = 0;
         return File(memory, "application/octet-stream", filename);
     }
-
     [HttpDelete("remove/{messageId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Delete message", Description = "Delete a message by ID")]
+    [SwaggerResponse(200, "Message deleted")]
+    [SwaggerResponse(403, "Forbidden")]
+    [SwaggerResponse(404, "Message not found")]
     public async Task<IActionResult> RemoveMessage(int messageId)
     {
         var message = await _context.ChatMessages.Include(m => m.Attachments).FirstOrDefaultAsync(m => m.Id == messageId);
@@ -227,6 +243,11 @@ public class ChatApiController : ControllerBase
 
     [HttpPut("edit/{messageId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Edit message", Description = "Edit the text content of a message")]
+    [SwaggerResponse(200, "Message edited")]
+    [SwaggerResponse(403, "Forbidden")]
+    [SwaggerResponse(404, "Message not found")]
+    [SwaggerResponse(400, "Invalid input")]
     public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDto dto)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -266,6 +287,9 @@ public class ChatApiController : ControllerBase
 
     [HttpGet("me")]
     [Authorize]
+    [SwaggerOperation(Summary = "Get current user ID", Description = "Returns user ID from JWT")]
+    [SwaggerResponse(200, "User ID returned")]
+    [SwaggerResponse(401, "Unauthorized")]
     public IActionResult GetCurrentUserId()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -277,6 +301,9 @@ public class ChatApiController : ControllerBase
 
     [HttpGet("messages/{chatId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Get messages", Description = "Get all messages in a chat")]
+    [SwaggerResponse(200, "Messages returned")]
+    [SwaggerResponse(500, "Internal server error")]
     public async Task<IActionResult> GetMessages(string chatId)
     {
         try
@@ -329,6 +356,10 @@ public class ChatApiController : ControllerBase
 
     [HttpPost("pin/{messageId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Pin/unpin message", Description = "Toggle pin status of a message")]
+    [SwaggerResponse(200, "Pin status changed")]
+    [SwaggerResponse(403, "User not a participant")]
+    [SwaggerResponse(404, "Message not found")]
     public async Task<IActionResult> TogglePinMessage(int messageId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -364,6 +395,9 @@ public class ChatApiController : ControllerBase
 
     [HttpGet("pinned/{chatId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Get pinned messages", Description = "Get all pinned messages in a chat")]
+    [SwaggerResponse(200, "Pinned messages returned")]
+    [SwaggerResponse(403, "User not authorized")]
     public async Task<IActionResult> GetPinnedMessages(string chatId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

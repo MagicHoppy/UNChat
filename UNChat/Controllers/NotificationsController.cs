@@ -6,20 +6,22 @@ using UNChat.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace UNChat.Controllers
 {
     [Route("notifications")]
-    public class NotificationsController : Controller
+    [ApiController]
+    public class NotificationsController : ControllerBase
     {
-        // Updated to store userId + subscription
         private static List<PushSubscriptionWrapper> _subscriptions = new();
 
-        // POST: /notifications/subscribe
         [HttpPost("subscribe")]
+        [SwaggerOperation(Summary = "Subscribe to push notifications",
+                         Description = "Registers a user's device for push notifications")]
+        [SwaggerResponse(200, "Subscription successful")]
         public IActionResult Subscribe([FromBody] PushSubscriptionWrapper data)
         {
-            // Optional cleanup: remove old entries
             _subscriptions.RemoveAll(s =>
                 s.UserId == data.UserId ||
                 s.Subscription.Endpoint == data.Subscription.Endpoint
@@ -29,8 +31,10 @@ namespace UNChat.Controllers
             return Ok();
         }
 
-        // POST: /notifications/send
         [HttpPost("send")]
+        [SwaggerOperation(Summary = "Send push notification",
+                         Description = "Sends a push notification to specified users")]
+        [SwaggerResponse(200, "Notifications sent successfully")]
         public async Task<IActionResult> SendNotification([FromBody] dynamic body)
         {
             string message = body.message;

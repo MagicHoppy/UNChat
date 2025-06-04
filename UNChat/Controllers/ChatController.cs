@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using UNChat.Context;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace UNChat.Controllers
 {
@@ -38,6 +39,11 @@ namespace UNChat.Controllers
             return View(model);
         }
         [HttpGet("/api/users")]
+        [Authorize]
+        [SwaggerOperation(Summary = "Get available users", Description = "Retrieves a list of users who are not friends with the current authenticated user.")]
+        [SwaggerResponse(200, "Returns a list of users not yet friends with the current user")]
+        [SwaggerResponse(401, "Unauthorized – user is not authenticated")]
+        [SwaggerResponse(500, "Internal server error")]
         public async Task<IActionResult> GetUsers()
         {
             var currentUser = await _userManager.GetUserAsync(User);

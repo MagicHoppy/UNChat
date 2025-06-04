@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -17,6 +18,10 @@ public class GifController : ControllerBase
     }
 
     [HttpGet("search")]
+    [SwaggerOperation(Summary = "Search GIFs", Description = "Searches for GIFs using the Tenor API")]
+    [SwaggerResponse(200, "GIF search results returned successfully")]
+    [SwaggerResponse(400, "Empty search query")]
+    [SwaggerResponse(500, "Error fetching GIFs from Tenor API")]
     public async Task<IActionResult> Search(string query)
     {
         if (string.IsNullOrWhiteSpace(query))

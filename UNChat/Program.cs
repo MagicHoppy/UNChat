@@ -10,6 +10,7 @@ using UNChat.Context;
 using UNChat.Hubs;
 using UNChat.Models;
 using static JwtTokenService;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "UNChat API", Version = "v1" });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.EnableAnnotations();
+    c.IncludeXmlComments(xmlPath);
+
 });
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<ApiKeyAuthFilter>();

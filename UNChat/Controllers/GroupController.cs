@@ -11,6 +11,7 @@ using UNChat.Hubs;
 using UNChat.DTOs;
 using System.Security.Claims;
 using System.IO;
+using Swashbuckle.AspNetCore.Annotations;
 
 [Route("api/chat")]
 [ApiController]
@@ -25,6 +26,9 @@ public class GroupController : ControllerBase
 
     [HttpPost("create-group")]
     [Authorize]
+    [SwaggerOperation(Summary = "Create group chat", Description = "Creates a new group chat and adds participants")]
+    [SwaggerResponse(200, "Group chat created successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
     public async Task<IActionResult> CreateGroupChat([FromBody] GroupChatDto dto)
     {
         var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -56,6 +60,9 @@ public class GroupController : ControllerBase
 
     [HttpGet("groups")]
     [Authorize]
+    [SwaggerOperation(Summary = "Get user's group chats", Description = "Retrieves all group chats for the current user")]
+    [SwaggerResponse(200, "List of group chats retrieved successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
     public async Task<IActionResult> GetUserGroupChats()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -104,9 +111,12 @@ public class GroupController : ControllerBase
         return Ok(result);
     }
 
-
     [HttpPost("leave-group/{chatId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Leave group chat", Description = "Allows a user to leave a group chat")]
+    [SwaggerResponse(200, "Successfully left the group chat")]
+    [SwaggerResponse(401, "Unauthorized")]
+    [SwaggerResponse(404, "Group chat not found")]
     public async Task<IActionResult> LeaveGroup(string chatId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -188,10 +198,13 @@ public class GroupController : ControllerBase
         });
     }
 
-
-
     [HttpDelete("delete-group/{chatId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Delete group chat", Description = "Deletes a group chat (admin only)")]
+    [SwaggerResponse(200, "Group chat deleted successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
+    [SwaggerResponse(403, "Forbidden - admin privileges required")]
+    [SwaggerResponse(404, "Group chat not found")]
     public async Task<IActionResult> DeleteGroup(string chatId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -225,8 +238,12 @@ public class GroupController : ControllerBase
 
         return Ok(new { message = "Grupa została usunięta." });
     }
+
     [HttpGet("members/{chatId}")]
     [Authorize]
+    [SwaggerOperation(Summary = "Get group members", Description = "Retrieves all members of a group chat")]
+    [SwaggerResponse(200, "List of group members retrieved successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
     public async Task<IActionResult> GetChatMembers(string chatId)
     {
         var members = await _context.UserChats
@@ -241,9 +258,13 @@ public class GroupController : ControllerBase
         return Ok(members);
     }
 
-
     [HttpPost("remove-member")]
     [Authorize]
+    [SwaggerOperation(Summary = "Remove member from group", Description = "Removes a member from a group chat (admin only)")]
+    [SwaggerResponse(200, "Member removed successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
+    [SwaggerResponse(403, "Forbidden - admin privileges required")]
+    [SwaggerResponse(404, "Group chat or member not found")]
     public async Task<IActionResult> RemoveMember([FromBody] MemberEditDto dto)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -271,6 +292,11 @@ public class GroupController : ControllerBase
 
     [HttpPost("promote")]
     [Authorize]
+    [SwaggerOperation(Summary = "Promote to admin", Description = "Promotes a member to admin in a group chat")]
+    [SwaggerResponse(200, "Member promoted successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
+    [SwaggerResponse(403, "Forbidden - admin privileges required")]
+    [SwaggerResponse(404, "Group chat or member not found")]
     public async Task<IActionResult> PromoteToAdmin([FromBody] MemberEditDto dto)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -293,8 +319,14 @@ public class GroupController : ControllerBase
 
         return Ok();
     }
+
     [HttpPost("toggle-admin")]
     [Authorize]
+    [SwaggerOperation(Summary = "Toggle admin status", Description = "Toggles admin status for a group member")]
+    [SwaggerResponse(200, "Admin status toggled successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
+    [SwaggerResponse(403, "Forbidden - admin privileges required")]
+    [SwaggerResponse(404, "Group chat or member not found")]
     public async Task<IActionResult> ToggleAdmin([FromBody] MemberEditDto dto)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -320,6 +352,9 @@ public class GroupController : ControllerBase
 
     [HttpPost("invite")]
     [Authorize]
+    [SwaggerOperation(Summary = "Invite to group", Description = "Invites a user to a group chat")]
+    [SwaggerResponse(200, "User invited successfully")]
+    [SwaggerResponse(401, "Unauthorized")]
     public async Task<IActionResult> InviteToGroup([FromBody] MemberEditDto dto)
     {
         var alreadyInGroup = await _context.UserChats
