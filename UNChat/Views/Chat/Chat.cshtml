@@ -13,16 +13,24 @@
     <!-- Main Chat Area - Expanded Width -->
     <div id="chatBox" class="flex-grow-1 d-flex flex-column p-2" style="width: 60%;">
         <input type="hidden" id="userId" value="@Model.UserId" />
-        <h4 id="chatHeader" class="mb-3">Wybierz użytkownika</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+            <!-- Left-aligned header -->
+            <h4 id="chatHeader" class="mb-0 flex-shrink-0">Wybierz użytkownika</h4>
 
-        <div class="mb-3 d-flex gap-2">
-            <input type="text" id="searchInput" class="form-control" placeholder="Szukaj wiadomości...">
-            <button id="searchButton" class="btn btn-primary">Szukaj</button>
-            <button id="pinnedButton" class="btn btn-warning">📌 Przypięte</button>
-        </div>
+            <!-- Search input that expands to fill available space -->
+            <div class="position-relative flex-grow-1 mx-2" style="min-width: 100px;">
+                <input type="text" id="searchInput" class="form-control d-none w-100 pe-5" placeholder="Szukaj wiadomości...">
+                <button id="closeSearchInput" class="btn btn-sm btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2 d-none" style="z-index: 1;">&times;</button>
+            </div>
+
+            <!-- Right-aligned buttons -->
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button id="pinnedButton" class="btn btn-warning">📌</button>
+                <button id="searchButton" class="btn btn-primary">Szukaj</button>
+            </div>
+        </div>        
         <ul id="pinnedMessages" class="list-group mb-3 d-none"></ul>
-
-        <ul id="searchResults" class="list-group mb-3"></ul>
+        <ul id="searchResults" class="list-group mb-1"></ul>
         <button id="closeSearchResults" class="btn btn-sm btn-secondary mt-2 d-none">Zamknij</button>
 
         <div id="messages" class="flex-grow-1 overflow-auto border rounded p-3 bg-light mb-3"></div>

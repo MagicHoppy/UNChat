@@ -80,17 +80,45 @@ export function setupChat() {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const attachmentInput = document.getElementById("attachmentInput");
-    subscribeUser();
+
     if (!messageInput || !sendButton || !attachmentInput) {
         console.error("Brak wymaganych elementów DOM");
         return;
     }
 
-    document.getElementById("searchButton")?.addEventListener("click", handleSearch);
+    subscribeUser();
+
+    const searchInput = document.getElementById("searchInput");
+    const closeSearchInput = document.getElementById("closeSearchInput");
+    const searchButton = document.getElementById("searchButton");
+
+    let searchInputVisible = false;
+
+    searchButton?.addEventListener("click", () => {
+        if (!searchInputVisible) {
+            // First click: Show input
+            searchInput.classList.remove("d-none");
+            closeSearchInput.classList.remove("d-none");
+            searchInput.focus();
+            searchInputVisible = true;
+        } else {
+            // Second click: Perform search
+            handleSearch();
+        }
+    });
+
+    closeSearchInput?.addEventListener("click", () => {
+        searchInput.classList.add("d-none");
+        closeSearchInput.classList.add("d-none");
+        searchInput.value = "";
+        searchInputVisible = false;
+    });
+
     document.getElementById("closeSearchResults")?.addEventListener("click", () => {
         document.getElementById("searchResults").innerHTML = "";
         document.getElementById("closeSearchResults").classList.add("d-none");
     });
+
 
     document.getElementById("gifButton")?.addEventListener("click", () => {
         const gifContainer = document.getElementById("gifSearchContainer");
