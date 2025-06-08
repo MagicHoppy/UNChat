@@ -2,15 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using UNChat.Context;
 using UNChat.Models;
 using UNChat.Hubs;
 using UNChat.DTOs;
 using System.Security.Claims;
-using System.IO;
 using Swashbuckle.AspNetCore.Annotations;
 
 [Route("api/chat")]
@@ -269,8 +265,7 @@ public class ChatApiController : ControllerBase
         await _context.SaveChangesAsync();
 
         var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-        // Można powiadomić innych użytkowników czatu:
-        //await hub.Clients.Group(message.ChatId).SendAsync("MessageEdited", message.Id, message.Message);
+
         if (chat != null)
         {
             foreach (var participant in chat.Participants)
@@ -308,14 +303,14 @@ public class ChatApiController : ControllerBase
     {
         try
         {
-            // 1) Pobieramy wiadomości
+            // Pobieramy wiadomości
             var messages = await _context.ChatMessages
                 .Where(m => m.ChatId == chatId)
                 .Include(m => m.Attachments)
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
 
-            // 2) Wyciągamy unikalne senderId, aby jednym zapytaniem pobrać nazwy
+            // Wyciągamy unikalne senderId, aby jednym zapytaniem pobrać nazwy
             var senderIds = messages.Select(m => m.SenderId).Distinct().ToList();
 
             var userNames = await _context.Users
@@ -324,7 +319,7 @@ public class ChatApiController : ControllerBase
                 .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
             //var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // 3) Mapujemy do DTO
+            // Mapujemy do DTO
             var messageDtos = messages.Select(m => new ChatMessageDto
             {
                 Id = m.Id,
@@ -339,7 +334,7 @@ public class ChatApiController : ControllerBase
                 }).ToList() ?? new List<ChatAttachmentDto>(),
 
                 Delivered = _context.ChatMessageDeliveries
-                    .Any(d => d.MessageId == m.Id && d.UserId != m.SenderId), // lub == currentUserId jeśli chcesz dokładnie
+                    .Any(d => d.MessageId == m.Id && d.UserId != m.SenderId),
                 Read = _context.ChatMessageReads
                     .Any(r => r.MessageId == m.Id && r.UserId != m.SenderId)
             }).ToList();

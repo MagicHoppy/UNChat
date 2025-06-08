@@ -25,4 +25,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
-setInterval(loadFriends, 30000); // refresh every 30 seconds
+setInterval(loadFriends, 30000); // 30 sekund

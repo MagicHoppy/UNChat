@@ -1,7 +1,7 @@
 ﻿import { connection } from "./connection.js";
 function updateMessageContent(wrapper, newMessage) {
     const messageElement = wrapper.querySelector(".message");
-    messageElement.innerHTML = ""; // wyczyść stare treści
+    messageElement.innerHTML = ""; 
 
     messageElement.textContent = newMessage;
 
@@ -50,12 +50,12 @@ export async function addMessage(type, message, time = null, messageId = null, s
 
     // Create inner row
     const row = document.createElement("div");
-    row.className = "d-flex align-items-center"; // Flexbox: [button][message]
+    row.className = "d-flex align-items-center"; 
 
     // Create delete button
     const deleteButton = document.createElement("button");
     deleteButton.innerHTML = "&times;";
-    deleteButton.className = "delete-button btn btn-sm btn-danger me-2"; // Margin right
+    deleteButton.className = "delete-button btn btn-sm btn-danger me-2"; 
     deleteButton.style.padding = "0.2rem 0.5rem";
     deleteButton.style.visibility = "hidden"; 
     wrapper.addEventListener("mouseenter", () => {
@@ -87,7 +87,7 @@ export async function addMessage(type, message, time = null, messageId = null, s
     // Create edit button
     const editButton = document.createElement("button");
     editButton.innerHTML = "✎";
-    editButton.className = "edit-button btn btn-sm btn-danger me-2"; // Margin right
+    editButton.className = "edit-button btn btn-sm btn-danger me-2"; 
     editButton.style.padding = "0.2rem 0.5rem";
     editButton.style.visibility = "hidden";
     wrapper.addEventListener("mouseenter", () => {
@@ -138,7 +138,6 @@ export async function addMessage(type, message, time = null, messageId = null, s
     });
     // Handle pin button click
     pinButton.addEventListener("click", async () => {
-        // Możesz oznaczyć wiadomość jako przypiętą, np. dodając klasę lub wykonując zapytanie
         const res = await fetch(`/api/chat/pin/${messageId}`, {
             method: "POST"
         });
@@ -165,8 +164,6 @@ export async function addMessage(type, message, time = null, messageId = null, s
         reactionButton.style.visibility = "hidden";
     });
     // Handle emoji button click
-    // Handle emoji button click
-    // Handle emoji button click
     reactionButton.addEventListener("click", async (e) => {
         e.stopPropagation(); // zapobiega zamykaniu od razu
 
@@ -180,7 +177,7 @@ export async function addMessage(type, message, time = null, messageId = null, s
         let emojis = [];
         try {
             const res = await fetch("/api/reactions/emojis");
-            emojis = await res.json(); // [{id: 1, symbol: "😀"}, ...]
+            emojis = await res.json(); 
         } catch (err) {
             console.error("Nie udało się pobrać emoji", err);
             return;
@@ -282,7 +279,6 @@ export async function addMessage(type, message, time = null, messageId = null, s
     const extension = message.split(".").pop().toLowerCase();
 
     if ((message.startsWith("/uploads/") && ["gif", "jpg", "jpeg", "png"].includes(extension))) {
-        console.log("gif")
         const img = document.createElement("img");
         img.src = message;
         img.className = "img-fluid rounded";
@@ -383,13 +379,6 @@ export async function addMessage(type, message, time = null, messageId = null, s
         messageElement.textContent = message;
     }
 
-    //if (time) {
-    //    const timeSpan = document.createElement("small");
-    //    timeSpan.className = "timestamp text-muted mb-1 d-block";
-    //    const date = new Date(time);
-    //    timeSpan.textContent = formatMessageTime(date);
-    //    wrapper.appendChild(timeSpan);
-    //}
 
 
     if (type === "sent") {

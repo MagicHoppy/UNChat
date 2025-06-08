@@ -4,26 +4,26 @@
 }
 
 <div id="chatContainer" class="d-flex vh-85" style="margin: 0; padding: 0;">
-    <!-- Users List - Reduced Width -->
+    <!-- Users List -->
     <div id="userList" class="bg-light p-2 overflow-auto border-end" style="width: 200px;">
         <h5 class="fw-bold mb-3">Użytkownicy</h5>
         <div id="users" class="d-flex flex-column gap-2"></div>
     </div>
 
-    <!-- Main Chat Area - Expanded Width -->
+    <!-- Main Chat Area -->
     <div id="chatBox" class="flex-grow-1 d-flex flex-column p-2" style="width: 60%;">
         <input type="hidden" id="userId" value="@Model.UserId" />
         <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
-            <!-- Left-aligned header -->
+            <!-- Header -->
             <h4 id="chatHeader" class="mb-0 flex-shrink-0">Wybierz użytkownika</h4>
 
-            <!-- Search input that expands to fill available space -->
+            <!-- Search input -->
             <div class="position-relative flex-grow-1 mx-2" style="min-width: 100px;">
                 <input type="text" id="searchInput" class="form-control d-none w-100 pe-5" placeholder="Szukaj wiadomości...">
                 <button id="closeSearchInput" class="btn btn-sm btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2 d-none" style="z-index: 1;">&times;</button>
             </div>
 
-            <!-- Right-aligned buttons -->
+            <!-- Right buttons -->
             <div class="d-flex gap-2 flex-shrink-0">
                 <button id="pinnedButton" class="btn btn-warning">📌</button>
                 <button id="searchButton" class="btn btn-primary">Szukaj</button>
@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <!-- Friends List - Reduced Width -->
+    <!-- Friends List -->
     <div id="friendList" class="bg-light p-2 overflow-auto border-start" style="width: 300px;">
         <h5 class="fw-bold mb-3">Znajomi</h5>
         <ul id="friends" class="list-group"></ul>
@@ -121,7 +121,7 @@
 
     </div>
 
-    <!-- Friend Requests - Reduced Width -->
+    <!-- Friend Requests -->
     <div id="requestsContainer" class="bg-light p-2 overflow-auto border-start" style="width: 200px;">
         <h5 class="fw-bold mb-3">Zaproszenia</h5>
         <div id="requests" class="d-flex flex-column gap-2"></div>

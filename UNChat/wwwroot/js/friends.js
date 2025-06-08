@@ -10,7 +10,7 @@ let groupSettingsModalInstance;
 export function enableGroupSelectionMode() {
     groupSelectionMode = true;
     selectedUserIds = [];
-    loadFriends(); // reload to show checkboxes
+    loadFriends(); 
 }
 
 export async function loadFriends() {
@@ -43,7 +43,6 @@ export async function loadFriends() {
         userButton.dataset.id = friend.chatId;
         userButton.classList.add("user-btn");
 
-        console.log(friend.chatId);
 
         if (groupSelectionMode) {
             const checkbox = document.createElement("input");
@@ -173,7 +172,6 @@ export async function addFriend(friendId) {
         });
 
         if (response.ok) {
-            // Using Toast notification instead of alert
             showToast("Success", "Wysłano zaproszenie!", "success");
             loadFriends();
         } else {
@@ -207,7 +205,7 @@ export async function removeFriend(friendId) {
     }
 }
 
-// Helper function for Bootstrap toast notifications
+// Helper
 export function showToast(title, message, type = "info") {
     const toastContainer = document.getElementById("toastContainer") || createToastContainer();
     const toastId = `toast-${Date.now()}`;
@@ -233,7 +231,6 @@ export function showToast(title, message, type = "info") {
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
 
-    // Remove toast after it's hidden
     toast.addEventListener("hidden.bs.toast", () => {
         toast.remove();
     });
@@ -250,14 +247,14 @@ function createToastContainer() {
 connection.on("FriendRemoved", (removedFriendId) => {
     const currentUserId = document.getElementById("userId").value;
     if (removedFriendId) {
-        loadFriends(); // refresh the friend list
+        loadFriends(); 
         loadUsers();
     }
 });
 connection.on("FriendAdded", (addedFriendId) => {
     const currentUserId = document.getElementById("userId").value;
     if (addedFriendId) {
-        loadFriends(); // refresh the friend list
+        loadFriends(); 
         loadUsers();
 
     }
@@ -288,7 +285,7 @@ export async function loadGroupChats() {
 
         const button = document.createElement("button");
         button.className = "btn btn-link text-start flex-grow-1";
-        button.dataset.id = chat.chatId; // ważne do identyfikacji
+        button.dataset.id = chat.chatId; 
         button.textContent = chat.chatName || "Grupa bez nazwy";
 
         // Dodaj wykrzyknik, jeśli są nieprzeczytane wiadomości
@@ -429,7 +426,7 @@ async function openGroupSettingsModal(chatId, chatName, isAdmin) {
         const query = searchInput.value.toLowerCase();
         resultsContainer.innerHTML = "";
 
-        if (query.length < 2) return; // opcjonalnie: zacznij po 2 znakach
+        if (query.length < 2) return; // zacznij po 2 znakach
 
         const matches = potentialInvitees.filter(user => user.name.toLowerCase().includes(query));
 
@@ -450,7 +447,7 @@ async function openGroupSettingsModal(chatId, chatName, isAdmin) {
                 });
                 searchInput.value = "";
                 resultsContainer.innerHTML = "";
-                openGroupSettingsModal(chatId, chatName, isAdmin); // odśwież modal
+                openGroupSettingsModal(chatId, chatName, isAdmin); 
             });
             resultsContainer.appendChild(item);
         });

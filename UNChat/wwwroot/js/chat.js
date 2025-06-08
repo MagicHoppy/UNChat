@@ -64,7 +64,6 @@ export async function selectUser(chatId, userName) {
             if (type === "received") {
                 connection.invoke("MarkAsDelivered", msg.id).catch(err => console.error(err));
 
-                // Opcjonalne opóźnienie, możesz dostosować
                 setTimeout(() => {
                     connection.invoke("MarkAsRead", msg.id).catch(err => console.error(err));
                 }, 1000);
@@ -96,13 +95,13 @@ export function setupChat() {
 
     searchButton?.addEventListener("click", () => {
         if (!searchInputVisible) {
-            // First click: Show input
+            // Pierwsze klikniecie: Pokaz input
             searchInput.classList.remove("d-none");
             closeSearchInput.classList.remove("d-none");
             searchInput.focus();
             searchInputVisible = true;
         } else {
-            // Second click: Perform search
+            // Drugie klilkniecie: Szukaj
             handleSearch();
         }
     });
@@ -154,7 +153,7 @@ export function setupChat() {
     connection.on("ReceiveMessage", async (senderId, senderName, message, attachmentUrl, timestamp, id, chatId) => {
         const currentUserId = document.getElementById("userId").value;
         if (!currentUserId || senderId === currentUserId || chatId != selectedChatId) {
-            // NOWOŚĆ: Zaznacz jako nieprzeczytane
+            // Zaznacz jako nieprzeczytane
             if (chatId !== selectedChatId) {
                 unreadMessages[chatId] = true;
                 markChatAsUnread(chatId);
@@ -176,8 +175,7 @@ export function setupChat() {
 
 
     connection.on("MentionNotification", ({ from, senderId, chatId, chatName, message, timestamp }) => {
-        const formattedTime = new Date(timestamp).toLocaleTimeString(); // or .toLocaleString() for full date + time
-        console.log(chatName)
+        const formattedTime = new Date(timestamp).toLocaleTimeString(); 
         const displayChatName = chatName == null ? 'prywatnym' : chatName;
 
         const shortMsg = message.length > 100 ? message.slice(0, 100) + "..." : message;
@@ -189,7 +187,7 @@ export function setupChat() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: payload,
-                    userIds: [currentUserId]  // Only send to the current user
+                    userIds: [currentUserId]  // Tylko do uzytkownika
                 })
             });
         }
@@ -202,8 +200,6 @@ export function setupChat() {
             return;
         }
 
-        console.log("id powiadomienia:", currentUserId);
-        console.log("nadawca:", senderId);
 
         if (currentUserId !== senderId) {
             sendPushNotification(notificationMessage);
@@ -232,17 +228,17 @@ export function setupChat() {
 async function subscribeUser() {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
         try {
-            // Register and wait for it to be active
+            // Zarejestruj i czekaj na stan
             const registration = await navigator.serviceWorker.register('/sw.js');
-            await navigator.serviceWorker.ready;  // ✅ Wait for active state
+            await navigator.serviceWorker.ready;  
 
-            // Subscribe to push
+            // Subskrypcja
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array('BKY37T-xh1GCXAWSBySR27YKyV0MxZpODbVIRXH4CkbkScQOhb9mMKyRcS24R3P8T1yjCRXXo8DAPZ8EilT7ZGM')
             });
 
-            // Send subscription to the server
+            // Wyslij na serwer
             await fetch('/notifications/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -311,11 +307,9 @@ function locationSelection() {
         const lat = selectedLocation.lat.toFixed(6);
         const lng = selectedLocation.lng.toFixed(6);
         const osmLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
-        //alert(`Sending location:\n${osmLink}`); // Replace with your sending logic
         sendLocationMessage(osmLink);
         bootstrap.Modal.getInstance(mapModalEl).hide();
     });
-    // Fix backdrop bug and restore UI interaction
     mapModalEl.addEventListener('hidden.bs.modal', () => {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
@@ -359,8 +353,6 @@ async function sendMessage() {
     const attachmentInput = document.getElementById("attachmentInput");
 
     if (!senderId || !selectedChatId) {
-        console.log(senderId);
-        console.log(selectedChatId);
         alert("Nie wybrano czatu lub brak ID użytkownika!");
         return;
     }
