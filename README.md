@@ -16,6 +16,9 @@ Możliwość przesyłania lokalizacji innym użytkownikom. Na każdą wiadomoś�
 <img width="349" height="112" alt="image" src="https://github.com/user-attachments/assets/4ffa556a-7e85-4793-b5c0-bd7978feab41" />
 
 System powiadomień wewnątrz aplikacji oraz jako powiadomienia push systemowe.
+
+<img width="1088" height="137" alt="image" src="https://github.com/user-attachments/assets/4d84bb65-be7a-4c8d-8754-49ad5174c117" />
+System przypinania wiadomości oraz przeszukiwania czatów.
 ##  Funkcjonalności
 
 - **Komunikacja w czasie rzeczywistym** dzięki SignalR.
