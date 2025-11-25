@@ -19,6 +19,7 @@ System powiadomień wewnątrz aplikacji oraz jako powiadomienia push systemowe.
 
 <img width="1088" height="137" alt="image" src="https://github.com/user-attachments/assets/4d84bb65-be7a-4c8d-8754-49ad5174c117" />
 System przypinania wiadomości oraz przeszukiwania czatów.
+
 ##  Funkcjonalności
 
 - **Komunikacja w czasie rzeczywistym** dzięki SignalR.
@@ -28,7 +29,6 @@ System przypinania wiadomości oraz przeszukiwania czatów.
 - **Historia wiadomości** z wyszukiwaniem i możliwością edycji/usuwania.
 - **Zarządzanie kontaktami** oraz czatami grupowymi.
 - **Tryb ciemny/jasny** zapamiętywany przez aplikacje.
-- **Generowanie dokumentów PDF** (QuestPDF).
 
 ##  Wykorzystane technologie
 
