@@ -8,6 +8,7 @@
 	  <NoWarn>$(NoWarn);1591</NoWarn>
 	  <!-- Optional: suppress missing comment warnings -->
 
+    <UserSecretsId>0d22192e-f828-4573-aa9e-f5c796f4e8be</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
