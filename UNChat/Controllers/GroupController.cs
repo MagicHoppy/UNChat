@@ -1,16 +1,10 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using UNChat.Context;
 using UNChat.Models;
-using UNChat.Hubs;
 using UNChat.DTOs;
 using System.Security.Claims;
-using System.IO;
 using Swashbuckle.AspNetCore.Annotations;
 
 [Route("api/chat")]

@@ -4,7 +4,7 @@
     {
         public string Name { get; set; }
         public List<string> UserIds { get; set; }
-        public string CreatorId { get; set; } // Nowe pole
+        public string CreatorId { get; set; }
     }
 
 }

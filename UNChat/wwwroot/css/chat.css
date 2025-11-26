@@ -129,7 +129,6 @@ h4, h5 {
     transition: all 0.3s ease;
 }
 
-    /* SENT: Aligned right with color */
     .message.sent {
         background-color: #d1e7dd;
         margin-left: auto;
@@ -137,14 +136,13 @@ h4, h5 {
         border-bottom-right-radius: 0.3rem;
     }
 
-    /* RECEIVED: Aligned left with soft border */
     .message.received {
         background-color: #ffffff;
         border: 1px solid #ced4da;
         border-bottom-left-radius: 0.3rem;
     }
 
-/* Meta Info (time, status, etc.) */
+/* Meta Info */
 .message-meta {
     font-size: 0.75rem;
     opacity: 0.6;
@@ -152,7 +150,7 @@ h4, h5 {
     display: block;
 }
 
-/* OPTIONAL: Small tail indicator using pseudo-elements */
+/* Ogonek wiaodomosci */
 .message.sent::after {
     content: "";
     position: absolute;

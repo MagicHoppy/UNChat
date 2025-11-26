@@ -9,7 +9,7 @@
         public string ChatId { get; set; }
         public Chat Chat { get; set; }
 
-        public bool IsAdmin { get; set; } = false; // ✅✅✅✅✅✅✅✅ NOWE POLE
+        public bool IsAdmin { get; set; } = false;
     }
 
 }

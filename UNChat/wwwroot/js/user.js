@@ -11,10 +11,10 @@ export async function loadUsers() {
 
     users.forEach(user => {
         const container = document.createElement("div");
-        container.className = "d-flex justify-content-between align-items-center mb-2"; // Bootstrap flex
+        container.className = "d-flex justify-content-between align-items-center mb-2"; 
 
         const button = document.createElement("button");
-        button.className = "btn btn-outline-primary flex-grow-1 me-2"; // Bootstrap button
+        button.className = "btn btn-outline-primary flex-grow-1 me-2"; 
         button.textContent = user.name;
         button.dataset.id = user.id;
         button.addEventListener("click", () => {
@@ -25,7 +25,7 @@ export async function loadUsers() {
 
         const friendButton = document.createElement("button");
         friendButton.textContent = "➕";
-        friendButton.className = "btn btn-success"; // Bootstrap button
+        friendButton.className = "btn btn-success"; 
         friendButton.title = "Dodaj do znajomych";
         friendButton.addEventListener("click", (e) => {
             e.stopPropagation(); // To prevent selecting user
